@@ -20,8 +20,10 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
-        // optional: remove if backend already serves /api directly
-        // rewrite: path => path
+      },
+      '/auth': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
       }
     }
   }

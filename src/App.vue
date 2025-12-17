@@ -4,9 +4,4 @@ import { RouterView } from 'vue-router'
 
 <template>
   <RouterView />
-  
 </template>
-
-<style scoped>
-/* minimal styles only */
-</style>

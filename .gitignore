@@ -34,3 +34,6 @@ coverage
 
 # Vitest
 __screenshots__/
+localhost-key.pem
+.gitignore
+localhost.pem

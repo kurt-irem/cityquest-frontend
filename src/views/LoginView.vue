@@ -40,16 +40,17 @@ async function login() {
       headers: {
         'Authorization': `Basic ${basic}`,
       },
+      credentials: 'include' // WICHTIG: Cookie wird vom Backend gesetzt
     })
     if (!res.ok) {
       const text = await res.text()
       throw new Error(text || 'Login fehlgeschlagen')
     }
-    const data = await res.json()
-    const token = data && (data.token || data.jwt || data.accessToken)
-    if (!token) throw new Error('Kein Token erhalten')
-    localStorage.setItem('jwt', token)
-    window.location.href = '/home'
+    // Kein Token-Handling mehr - Cookie wird automatisch gesetzt!
+    success.value = 'Login erfolgreich!'
+    setTimeout(() => {
+      window.location.href = '/home'
+    }, 500)
   } catch (e) {
     error.value = e.message || 'Login fehlgeschlagen'
   } finally {

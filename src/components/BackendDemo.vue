@@ -12,12 +12,17 @@
       <input v-model="password" type="password" placeholder="password" />
       <button @click="register" :disabled="loadingAuth">Register</button>
       <button @click="login" :disabled="loadingAuth">Login</button>
-      <p v-if="token">JWT stored ({{ token.substring(0,20) }}...)</p>
+      <p v-if="loggedIn">✅ Eingeloggt (Cookie gesetzt)</p>
     </div>
-    <div class="block" v-if="token">
+    <div class="block">
       <h3>Protected Hello</h3>
       <button @click="loadProtected" :disabled="loadingProtected">Load /api/hello</button>
       <pre v-if="protectedData">{{ protectedData }}</pre>
+    </div>
+    <div class="block">
+      <h3>Auth Status</h3>
+      <button @click="checkAuth" :disabled="loadingAuth">Check /auth/me</button>
+      <pre v-if="authStatus">{{ authStatus }}</pre>
     </div>
   </div>
 </template>
@@ -28,9 +33,10 @@ import { ref } from 'vue'
 // Using Vite proxy so /api points to backend
 const username = ref('demoUser')
 const password = ref('demoPass')
-const token = ref(localStorage.getItem('jwt') || '')
+const loggedIn = ref(false)
 const publicData = ref('')
 const protectedData = ref('')
+const authStatus = ref('')
 
 const loadingPublic = ref(false)
 const loadingAuth = ref(false)
@@ -55,6 +61,7 @@ async function register() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: username.value, password: password.value })
     })
+    alert('Registrierung erfolgreich!')
   } finally {
     loadingAuth.value = false
   }
@@ -63,14 +70,20 @@ async function register() {
 async function login() {
   loadingAuth.value = true
   try {
+    const basic = btoa(`${username.value}:${password.value}`)
     const res = await fetch('/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username: username.value, password: password.value })
+      headers: {
+        'Authorization': `Basic ${basic}`,
+      },
+      credentials: 'include' // Cookie wird vom Backend gesetzt
     })
-    const data = await res.json()
-    token.value = data.token
-    localStorage.setItem('jwt', token.value)
+    if (res.ok) {
+      loggedIn.value = true
+      alert('Login erfolgreich! Cookie wurde gesetzt.')
+    } else {
+      alert('Login fehlgeschlagen')
+    }
   } finally {
     loadingAuth.value = false
   }
@@ -81,11 +94,30 @@ async function loadProtected() {
   protectedData.value = ''
   try {
     const res = await fetch('/api/hello', {
-      headers: { Authorization: 'Bearer ' + token.value }
+      credentials: 'include' // Cookie wird automatisch mitgesendet
     })
-    protectedData.value = await res.text()
+    if (res.ok) {
+      protectedData.value = await res.text()
+    } else {
+      protectedData.value = 'Fehler: ' + res.status + ' (nicht authentifiziert?)'
+    }
   } finally {
     loadingProtected.value = false
+  }
+}
+
+async function checkAuth() {
+  loadingAuth.value = true
+  authStatus.value = ''
+  try {
+    const res = await fetch('/auth/me', {
+      credentials: 'include' // Cookie wird automatisch mitgesendet
+    })
+    authStatus.value = await res.text()
+  } catch (e) {
+    authStatus.value = 'Fehler: ' + e.message
+  } finally {
+    loadingAuth.value = false
   }
 }
 </script>

@@ -1,4 +1,7 @@
 @import './base.css';
+@import './variables.css';
+@import './components.css';
+@import './layout.css';
 
 #app {
   max-width: 1280px;

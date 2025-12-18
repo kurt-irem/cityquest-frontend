@@ -40,13 +40,13 @@ async function login() {
       headers: {
         'Authorization': `Basic ${basic}`,
       },
-      credentials: 'include' // WICHTIG: Cookie wird vom Backend gesetzt
+      credentials: 'include' 
     })
     if (!res.ok) {
       const text = await res.text()
       throw new Error(text || 'Login fehlgeschlagen')
     }
-    // Kein Token-Handling mehr - Cookie wird automatisch gesetzt!
+   
     success.value = 'Login erfolgreich!'
     setTimeout(() => {
       window.location.href = '/home'

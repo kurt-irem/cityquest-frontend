@@ -8,7 +8,7 @@
   justify-content: center;
   gap: var(--spacing-sm);
   
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding:3px 10px;
   
   font-family: var(--font-family-base);
   font-size: var(--font-size-base);
@@ -17,7 +17,7 @@
   text-decoration: none;
   
   border: 1px solid transparent;
-  border-radius: var(--border-radius-md);
+  border-radius: 10px;
   
   cursor: pointer;
   transition: all var(--transition-base);
@@ -40,7 +40,7 @@
 /* Button Variants */
 .btn-primary {
   background-color: var(--color-primary);
-  color: white;
+  color: black;
   border-color: var(--color-primary);
 }
 
@@ -50,7 +50,7 @@
 
 .btn-secondary {
   background-color: var(--color-secondary);
-  color: white;
+  color: black;
 }
 
 .btn-secondary:hover {

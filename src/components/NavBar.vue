@@ -23,20 +23,44 @@ async function onLogout() {
 <template>
   <div class="navbar flex flex-between">
     <div class="accent-font">CityQuest</div>
-    <div class="flex flex-row flex-gap-sm" >
-        <div style="padding-right: 1em;">Logged in as: {{ username }}</div>
-        <button @click="onLogout" class="btn btn-secondary">Logout</button>
+    <div class="nav-links flex flex-row flex-gap-md">
+      <router-link to="/home" class="nav-link">Home</router-link>
+      <router-link to="/visits" class="nav-link">My Visits</router-link>
+    </div>
+    <div class="flex flex-row flex-gap-sm">
+      <div style="padding-right: 1em;">Logged in as: {{ username }}</div>
+      <button @click="onLogout" class="btn btn-secondary">Logout</button>
     </div>
   </div>
 </template>
 
 <style scoped>
-    .navbar{
-        background-color:var(--color-secondary);
+    .navbar {
+        background-color: var(--color-secondary);
         padding: 0 2em;
         align-items: center;
+    }
 
-        
+    .nav-links {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .nav-link {
+        color: inherit;
+        text-decoration: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        transition: background-color 0.2s;
+    }
+
+    .nav-link:hover {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-link.router-link-active {
+        background-color: rgba(0, 0, 0, 0.2);
+        font-weight: 500;
     }
 </style>
 

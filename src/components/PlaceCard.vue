@@ -10,8 +10,14 @@ const props = defineProps({
   mode: {
     type: String,
     default: 'visit' // 'visit' or 'collection'
+  },
+  showActions: {
+    type: Boolean,
+    default: false
   }
 })
+
+const emit = defineEmits(['edit', 'delete'])
 
 const router = useRouter()
 const showVisitForm = ref(false)
@@ -117,37 +123,67 @@ async function submitAddToCollection() {
 </script>
 
 <template>
-  <div class="card">
-    <div class="card-header">
-      <div>
-        <h3>{{ place.name }}</h3>
-        <p class="muted">{{ place.address || 'No address' }}</p>
-      </div>
-      <div>
-        <button v-if="mode === 'visit'" class="btn btn-primary btn-sm" @click="openVisitForm">Visited</button>
-        <button v-else-if="mode === 'collection'" class="btn btn-primary btn-sm" @click="loadCollections(); openVisitForm()">Add to Collection</button>
-      </div>
+    
+  <div class="place-card">
+    <!-- Edit/Delete Actions -->
+    <div v-if="showActions" class="card-actions">
+      <button @click.stop="emit('edit', place)" class="icon-btn" title="Edit">
+        <span class="material-icons">edit</span>
+      </button>
+      <button @click.stop="emit('delete', place.id)" class="icon-btn delete" title="Delete">
+        <span class="material-icons">delete</span>
+      </button>
     </div>
-    <p class="meta">
-      <strong>Category:</strong> {{ place.category || '-' }}
-      <span class="separator">|</span>
-      <strong>Created by:</strong> {{ place.createdByUsername || '-' }}
-    </p>
-    <p class="meta">
-      <strong>Created at:</strong>
-      {{ place.createdAt ? new Date(place.createdAt).toLocaleDateString('en-US') : '-' }}
-    </p>
-    <div v-if="place.googleMapsUrl" style="margin-top: 0.5rem;">
-      <a :href="place.googleMapsUrl" target="_blank" class="btn btn-outline btn-sm">View on Google Maps</a>
+
+    <!-- Image -->
+    <div class="image-container">
+      <img v-if="place.image" :src="place.image" :alt="place.name" class="place-image" />
+      <div v-else class="image-placeholder">📍</div>
+    </div>
+
+    <!-- Content -->
+    <div class="place-content">
+      <div class="place-header">
+        <h2 class="place-name">{{ place.name }}</h2>
+        <a v-if="place.googleMapsUrl" :href="place.googleMapsUrl" target="_blank" class="maps-icon" title="View on Google Maps">
+          <span class="material-icons">open_in_new</span>
+        </a>
+      </div>
+      <p class="place-address">{{ place.address || 'No address' }}</p>
+    </div>
+
+    <!-- Tags -->
+    <div v-if="place.category || (place.tags && place.tags.length > 0)" class="tags-container">
+      <span v-if="place.category" class="tag">{{ place.category }}</span>
+      <span v-for="tag in (place.tags || []).slice(0, 1)" :key="tag" class="tag">{{ tag }}</span>
+    </div>
+
+    <!-- Button -->
+    <div class="button-container">
+      <button 
+        v-if="mode === 'visit'" 
+        class="btn-action visited"
+        @click="openVisitForm"
+      >
+        Visited
+      </button>
+      <button 
+        v-else-if="mode === 'collection'" 
+        class="btn-action add-to-collection"
+        @click="loadCollections(); openVisitForm()"
+      >
+        add to list
+      </button>
     </div>
   </div>
   
+  <!-- Modal -->
   <div v-if="showVisitForm" class="modal-overlay" @click.self="closeVisitForm">
     <div class="modal">
       <div class="modal-header">
         <h2 v-if="mode === 'visit'">Log Visit</h2>
         <h2 v-else>Add to Collection</h2>
-        <button class="btn btn-ghost" @click="closeVisitForm">✕</button>
+        <button class="btn-close" @click="closeVisitForm">✕</button>
       </div>
 
       <div v-if="error" class="alert alert-error">{{ error }}</div>
@@ -202,33 +238,201 @@ async function submitAddToCollection() {
 </template>
 
 <style scoped>
-.card {
-  background: #fff;
-  border: 1px solid #e3e3e3;
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-}
-.card-header {
+.place-card {
+  background: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 5px;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 1rem;
+  padding: 1rem;
+  position: relative;
 }
-.muted { color: #777; }
-.meta { margin: 0.5rem 0; color: #444; }
-.separator { margin: 0 0.5rem; color: #999; }
+
+.card-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+  z-index: 10;
+}
+
+.icon-btn {
+  background: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 0.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.icon-btn .material-icons {
+  font-size: 18px;
+  color: #666;
+}
+
+.icon-btn:hover {
+  background: #f5f5f5;
+  border-color: #999;
+}
+
+.icon-btn:hover .material-icons {
+  color: #333;
+}
+
+.icon-btn.delete:hover {
+  background: #fee;
+  border-color: #fcc;
+}
+
+.icon-btn.delete:hover .material-icons {
+  color: #c33;
+}
+
+.image-container {
+  flex-shrink: 0;
+  width: 116px;
+  height: 93px;
+  background: #f5f5f5;
+  border-radius: 4px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.place-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image-placeholder {
+  font-size: 2rem;
+}
+
+.place-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.place-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.place-name {
+  margin: 0;
+  font-family: 'Manjari', sans-serif;
+  font-size: 25px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: black;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.maps-icon {
+  flex-shrink: 0;
+  color: #666;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.maps-icon .material-icons {
+  font-size: 20px;
+}
+
+.maps-icon:hover {
+  color: #333;
+}
+
+.place-address {
+  margin: 0;
+  font-family: 'Manjari', sans-serif;
+  font-size: 20px;
+  color: black;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tags-container {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: #e5f0fd;
+  color: black;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-family: 'Manjari', sans-serif;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.button-container {
+  flex-shrink: 0;
+}
+
+.btn-action {
+  padding: 0.5rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  font-family: 'Manjari', sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action.visited {
+  background: #6ba3a0;
+  color: white;
+  border: 2px solid #6ba3a0;
+}
+
+.btn-action.visited:hover {
+  background: #5a8f8c;
+  border-color: #5a8f8c;
+}
+
+.btn-action.add-to-collection {
+  background: #c1dbda;
+  color: black;
+  border: 2px solid #367565;
+}
+
+.btn-action.add-to-collection:hover {
+  background: #b0cccb;
+}
+
+/* Modal styles */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1rem;
   z-index: 50;
 }
+
 .modal {
-  background: #fff;
+  background: white;
   border-radius: 12px;
   padding: 1.5rem;
   max-width: 640px;
@@ -237,15 +441,121 @@ async function submitAddToCollection() {
   overflow: auto;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
+
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1rem;
 }
-.modal-actions { display: flex; gap: 0.75rem; margin-top: 1rem; }
-.grid { display: grid; gap: 0.75rem; }
-.grid-2 { grid-template-columns: repeat(2, 1fr); }
-input, textarea, select { width: 100%; padding: 0.55rem 0.75rem; border: 1px solid #d2d2d2; border-radius: 8px; margin-top: 0.25rem; }
-textarea { min-height: 90px; resize: vertical; }
+
+.modal-header h2 {
+  margin: 0;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+}
+
+.btn-close:hover {
+  color: #333;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.alert {
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.alert-error {
+  background: #fee;
+  color: #c33;
+}
+
+.alert-success {
+  background: #efe;
+  color: #3c3;
+}
+
+.grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d2d2d2;
+  border-radius: 8px;
+  margin-top: 0.25rem;
+  font-family: 'Manjari', sans-serif;
+}
+
+textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+label {
+  display: block;
+  margin-top: 1rem;
+  font-weight: 500;
+}
+
+label:first-of-type {
+  margin-top: 0;
+}
+
+.muted {
+  color: #777;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: 'Manjari', sans-serif;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #6ba3a0;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #5a8f8c;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #e0e0e0;
+  color: black;
+}
+
+.btn-secondary:hover {
+  background: #d0d0d0;
+}
 </style>

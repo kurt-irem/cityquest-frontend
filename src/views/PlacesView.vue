@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import NavBar from '@/components/NavBar.vue'
 import PlaceCard from '@/components/PlaceCard.vue'
+import PlacesManager from '@/components/PlacesManager.vue'
 
 const places = ref([])
 const loading = ref(false)
@@ -26,7 +27,8 @@ onMounted(loadPlaces)
 
 <template>
   <header><NavBar /></header>
-  <div class="places-view container">
+  <PlacesManager></PlacesManager>
+  <!-- <div class="places-view container">
     <h2>All Places</h2>
     
     <div v-if="error" class="alert alert-error">{{ error }}</div>
@@ -36,7 +38,7 @@ onMounted(loadPlaces)
     <div v-else class="grid">
       <PlaceCard v-for="place in places" :key="place.id" :place="place" mode="collection" />
     </div>
-  </div>
+  </div> -->
 </template>
 
 <style scoped>

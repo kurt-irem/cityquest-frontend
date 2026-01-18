@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import PlaceCard from '@/components/PlaceCard.vue'
 
 const places = ref([])
@@ -20,11 +20,26 @@ const formData = ref({
   googleMapsUrl: ''
 })
 const editingId = ref(null)
+const activeSource = ref('all') // 'all' | 'mine'
 
 // Filter/Search
 const searchQuery = ref('')
 const selectedCategory = ref('')
 const categories = ['Restaurant', 'Museum', 'Park', 'Sight', 'Cafe', 'Other']
+
+const filteredPlaces = computed(() => {
+  const pool = activeSource.value === 'mine' ? myPlaces.value : places.value
+  const term = searchQuery.value.trim().toLowerCase()
+  return pool.filter(p => {
+    const matchesSearch = term
+      ? (p.name || '').toLowerCase().includes(term) || (p.address || '').toLowerCase().includes(term)
+      : true
+    const matchesCategory = selectedCategory.value
+      ? (p.category || '').toLowerCase() === selectedCategory.value.toLowerCase() || (p.tags || []).some(t => t && t.toLowerCase() === selectedCategory.value.toLowerCase())
+      : true
+    return matchesSearch && matchesCategory
+  })
+})
 
 // Load all places (public list; keep for global view)
 async function loadAllPlaces() {
@@ -173,46 +188,46 @@ function resetForm() {
   editingId.value = null
 }
 
-// Search and filter (kept for later, currently unused)
-// async function searchPlaces() {
-//   if (!searchQuery.value) {
-//     await loadAllPlaces()
-//     return
-//   }
-//   loading.value = true
-//   try {
-//     const res = await fetch(`/api/places/search?name=${encodeURIComponent(searchQuery.value)}`, {
-//       credentials: 'include'
-//     })
-//     if (res.ok) {
-//       places.value = await res.json()
-//     }
-//   } catch (e) {
-//     error.value = e.message
-//   } finally {
-//     loading.value = false
-//   }
-// }
+//Search and filter (kept for later, currently unused)
+async function searchPlaces() {
+  if (!searchQuery.value) {
+    await loadAllPlaces()
+    return
+  }
+  loading.value = true
+  try {
+    const res = await fetch(`/api/places/search?name=${encodeURIComponent(searchQuery.value)}`, {
+      credentials: 'include'
+    })
+    if (res.ok) {
+      places.value = await res.json()
+    }
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    loading.value = false
+  }
+}
 
-// async function filterByCategory() {
-//   if (!selectedCategory.value) {
-//     await loadAllPlaces()
-//     return
-//   }
-//   loading.value = true
-//   try {
-//     const res = await fetch(`/api/places/category/${encodeURIComponent(selectedCategory.value)}`, {
-//       credentials: 'include'
-//     })
-//     if (res.ok) {
-//       places.value = await res.json()
-//     }
-//   } catch (e) {
-//     error.value = e.message
-//   } finally {
-//     loading.value = false
-//   }
-// }
+async function filterByCategory() {
+  if (!selectedCategory.value) {
+    await loadAllPlaces()
+    return
+  }
+  loading.value = true
+  try {
+    const res = await fetch(`/api/places/category/${encodeURIComponent(selectedCategory.value)}`, {
+      credentials: 'include'
+    })
+    if (res.ok) {
+      places.value = await res.json()
+    }
+  } catch (e) {
+    error.value = e.message
+  } finally {
+    loading.value = false
+  }
+}
 
 onMounted(() => {
   loadAllPlaces()
@@ -222,56 +237,77 @@ onMounted(() => {
 
 <template>
   <div class="places-view container">
-    <header class="header-row">
-      <h1>Your Places</h1>
+    <section class="hero">
+      <div>
+        <h1>Places</h1>
+        <p class="subtitle">Save places in your collection, choose from existing places or create new ones</p>
+      </div>
       <button class="btn btn-primary" @click="showForm = true">+ New Place</button>
-    </header>
+    </section>
 
     <div v-if="success" class="alert alert-success">{{ success }}</div>
     <div v-if="error" class="alert alert-error">{{ error }}</div>
 
-    <div v-if="loading" class="loading">Loading...</div>
+    <div class="controls">
+      <div class="search-bar">
+        <span class="material-icons search-icon">search</span>
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Search places by name or address"
+        />
+        <button v-if="searchQuery" class="clear-btn" @click="searchQuery = ''">✕</button>
+      </div>
 
-    <div v-else class="list">
-      <div v-if="myPlaces.length === 0" class="empty">No places created</div>
-      <div v-else class="list-item" v-for="place in myPlaces" :key="place.id">
-        <PlaceCard :place="place" />
-        <div class="actions" style="margin-top:0.5rem;">
-          <button @click="editPlace(place)" class="btn btn-primary">Edit</button>
-          <button @click="deletePlace(place.id)" class="btn">Delete</button>
-        </div>
+      <div class="sort-bar">
+        <button
+          class="pill"
+          :class="{ active: activeSource === 'all' }"
+          @click="activeSource = 'all'"
+        >
+          All places
+        </button>
+        <button
+          class="pill"
+          :class="{ active: activeSource === 'mine' }"
+          @click="activeSource = 'mine'"
+        >
+          My places
+        </button>
+
+        <div class="divider" aria-hidden="true"></div>
+
+        <button
+          class="pill"
+          :class="{ active: selectedCategory === '' }"
+          @click="selectedCategory = ''"
+        >
+          All tags
+        </button>
+        <button
+          v-for="cat in categories"
+          :key="cat"
+          class="pill"
+          :class="{ active: selectedCategory === cat }"
+          @click="selectedCategory = cat"
+        >
+          {{ cat }}
+        </button>
       </div>
     </div>
 
-    <!-- Search and filter (kept for later use)
-    <div class="flex flex-gap-md mb-lg" style="flex-wrap: wrap; margin-top: 1.5rem;">
-      <input 
-        v-model="searchQuery"
-        type="text"
-        placeholder="Search for place..."
-        @keyup.enter="searchPlaces"
-        style="flex: 1; min-width: 200px;">
-      
-      <select 
-        v-model="selectedCategory"
-        @change="filterByCategory"
-        style="min-width: 150px;">
-        <option value="">All Categories</option>
-        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-      </select>
+    <div v-if="loading" class="loading">Loading...</div>
 
-      <button @click="searchPlaces" class="btn btn-secondary">Search</button>
-      <button @click="loadAllPlaces()" class="btn btn-outline">Reset</button>
-    </div>
-    -->
-
-    <div class="all-list">
-      <h2>All Places ({{ places.length }})</h2>
-      <div v-if="places.length === 0" class="empty">No places found</div>
-      <div v-else class="grid grid-2">
-        <div v-for="place in places" :key="place.id">
-          <PlaceCard :place="place" />
-        </div>
+    <div v-else class="list">
+      <div v-if="filteredPlaces.length === 0" class="empty">No places found</div>
+      <div v-else class="list-item" v-for="place in filteredPlaces" :key="place.id">
+        <PlaceCard
+          :place="place"
+          :showActions="activeSource === 'mine'"
+          :mode="'collection'"
+          @edit="editPlace"
+          @delete="deletePlace"
+        />
       </div>
     </div>
 
@@ -329,13 +365,99 @@ onMounted(() => {
 <style scoped>
 .places-view {
   padding: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.header-row {
+.hero {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+
+.subtitle {
+  margin-top: 0.25rem;
+  color: #555;
+  max-width: 720px;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  padding: 0.35rem 0.6rem;
+  background: #fafafa;
+}
+
+.search-bar input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.95rem;
+}
+
+.search-icon {
+  color: #777;
+  font-size: 20px;
+}
+
+.clear-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem 0.4rem;
+  color: #777;
+  border-radius: 6px;
+}
+
+.clear-btn:hover {
+  background: #eee;
+}
+
+.sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.pill {
+  border: 1px solid #dcdcdc;
+  background: #f7f7f7;
+  border-radius: 999px;
+  padding: 0.4rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.pill.active {
+  background: #cfe8ff;
+  border-color: #76a9fa;
+  color: #0f4fa8;
+}
+
+.pill:hover {
+  background: #ececec;
+}
+
+.divider {
+  width: 1px;
+  height: 28px;
+  background: #e0e0e0;
+  margin: 0 0.25rem;
 }
 
 .list {
@@ -344,48 +466,10 @@ onMounted(() => {
   gap: 1rem;
 }
 
-.card {
-  background: #fff;
-  border: 1px solid #e3e3e3;
-  border-radius: 12px;
-  padding: 1rem 1.25rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.meta {
-  margin: 0.5rem 0;
-  color: #444;
-}
-
-.separator {
-  margin: 0 0.5rem;
-  color: #999;
-}
-
-.muted {
-  color: #777;
-}
-
 .loading,
 .empty {
   color: #666;
-  margin-top: 1rem;
-}
-
-.all-list {
-  margin-top: 2rem;
+  margin-top: 0.5rem;
 }
 
 .modal-overlay {
@@ -404,23 +488,41 @@ onMounted(() => {
   border-radius: 12px;
   padding: 1.5rem;
   max-width: 720px;
-  width: 100%;
+  width: min(720px, 95vw);
   max-height: 90vh;
   overflow: auto;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-sizing: border-box;
 }
 
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: 0.25rem;
 }
 
 .modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.modal-actions .btn-primary {
+  grid-column: 2;
+  justify-self: center;
+  width: 160px;
+}
+
+.modal-actions .btn-secondary {
+  grid-column: 3;
+  justify-self: end;
+  width: 140px;
 }
 
 .btn-ghost {
@@ -446,7 +548,8 @@ select {
   padding: 0.55rem 0.75rem;
   border: 1px solid #d2d2d2;
   border-radius: 8px;
-  margin-top: 0.25rem;
+  margin-top: 0.15rem;
+  margin-bottom: 0.35rem;
 }
 
 textarea {
@@ -454,15 +557,29 @@ textarea {
   resize: vertical;
 }
 
-@media (max-width: 640px) {
-  .header-row {
+@media (max-width: 768px) {
+  .hero {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .sort-bar {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  .actions {
-    flex-direction: column;
+  .modal-actions {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  .modal-actions .btn-primary,
+  .modal-actions .btn-secondary {
+    grid-column: auto;
+    justify-self: stretch;
+    width: 100%;
   }
 }
 </style>

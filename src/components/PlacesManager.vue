@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import PlaceCard from '@/components/PlaceCard.vue'
 
 const places = ref([])
 const myPlaces = ref([])
@@ -233,24 +234,11 @@ onMounted(() => {
 
     <div v-else class="list">
       <div v-if="myPlaces.length === 0" class="empty">No places created</div>
-      <div v-else class="card" v-for="place in myPlaces" :key="place.id">
-        <div class="card-header">
-          <div>
-            <h3>{{ place.name }}</h3>
-            <p class="muted">{{ place.address || 'No address' }}</p>
-          </div>
-          <div class="actions">
-            <button @click="editPlace(place)" class="btn btn-primary">Edit</button>
-            <button @click="deletePlace(place.id)" class="btn">Delete</button>
-          </div>
-        </div>
-        <p class="meta">
-          <strong>Category:</strong> {{ place.category || '-' }}
-          <span class="separator">|</span>
-          <strong>Created at:</strong> {{ place.createdAt ? new Date(place.createdAt).toLocaleDateString('en-US') : '-' }}
-        </p>
-        <div v-if="place.googleMapsUrl" class="muted">
-          <a :href="place.googleMapsUrl" target="_blank" class="btn btn-outline btn-sm">View on Google Maps</a>
+      <div v-else class="list-item" v-for="place in myPlaces" :key="place.id">
+        <PlaceCard :place="place" />
+        <div class="actions" style="margin-top:0.5rem;">
+          <button @click="editPlace(place)" class="btn btn-primary">Edit</button>
+          <button @click="deletePlace(place.id)" class="btn">Delete</button>
         </div>
       </div>
     </div>
@@ -281,18 +269,8 @@ onMounted(() => {
       <h2>All Places ({{ places.length }})</h2>
       <div v-if="places.length === 0" class="empty">No places found</div>
       <div v-else class="grid grid-2">
-        <div v-for="place in places" :key="place.id" class="card">
-          <h3>{{ place.name }}</h3>
-          <p class="muted">{{ place.address || 'No address' }}</p>
-          <p class="meta"><strong>Category:</strong> {{ place.category || '-' }}</p>
-          <!-- <p class="meta" v-if="place.latitude && place.longitude">
-            <strong>Coordinates:</strong> {{ place.latitude }}, {{ place.longitude }}
-          </p> -->
-          <p class="meta"><strong>Created by:</strong> {{ place.createdByUsername }}</p>
-          <p class="meta"><strong>Created at:</strong> {{ place.createdAt ? new Date(place.createdAt).toLocaleDateString('en-US') : '-' }}</p>
-          <div v-if="place.googleMapsUrl" style="margin-top: 0.5rem;">
-            <a :href="place.googleMapsUrl" target="_blank" class="btn btn-outline btn-sm">View on Google Maps</a>
-          </div>
+        <div v-for="place in places" :key="place.id">
+          <PlaceCard :place="place" />
         </div>
       </div>
     </div>

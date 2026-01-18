@@ -2,8 +2,9 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import HomeView from '../views/HomeView.vue'
 import LoginView from '../views/LoginView.vue'
-import CollectionView from '../views/CollectionView.vue'
+import CollectionsPage from '../views/CollectionsPage.vue'
 import CollectionDetailView from '../views/CollectionDetailView.vue'
+import PlacesView from '../views/PlacesView.vue'
 import VisitsView from '../views/VisitsView.vue'
 
 const router = createRouter({
@@ -12,8 +13,9 @@ const router = createRouter({
     { path: '/', redirect: '/login' },
     { path: '/login', name: 'login', component: LoginView },
     { path: '/home', name: 'home', component: HomeView, meta: { requiresAuth: true } },
-    { path: '/collections', name: 'collections', component: CollectionView, meta: { requiresAuth: true } },
+    { path: '/collections', name: 'collections', component: CollectionsPage, meta: { requiresAuth: true } },
     { path: '/collections/:id', name: 'collection-detail', component: CollectionDetailView, meta: { requiresAuth: true } },
+    { path: '/places', name: 'places', component: PlacesView, meta: { requiresAuth: true } },
     { path: '/visits', name: 'visits', component: VisitsView, meta: { requiresAuth: true } },
   ],
 })

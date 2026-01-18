@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const collections = ref([])
 const places = ref([])
 
@@ -59,6 +61,10 @@ function editCollection(col) {
 		placeIds: (col.places || []).map(p => p.id)
 	}
 	showForm.value = true
+}
+
+function openCollection(colId) {
+	router.push({ name: 'collection-detail', params: { id: colId } })
 }
 
 async function submitCollection() {
@@ -123,27 +129,16 @@ onMounted(async () => {
 
 		<div v-else class="list">
 			<div v-if="collections.length === 0" class="empty">No collections yet</div>
-			<div v-else class="card" v-for="col in collections" :key="col.id">
-				<div class="card-header">
+			<div v-else class="card clickable" :style="{ borderColor: col.color || '#e3e3e3' }" v-for="col in collections" :key="col.id" @click="openCollection(col.id)">
+				<div class="card-header" >
 					<div>
 						<h3 class="col-title">{{ col.title }}</h3>
-						<p v-if="col.description" class="muted">{{ col.description }}</p>
 					</div>
-					<div class="actions">
-						<button class="btn btn-secondary" @click="editCollection(col)">Edit</button>
-						<button class="btn " @click="deleteCollection(col.id)">Delete</button>
+					<div class="muted">Places: {{ (col.places || []).length }}</div>
+					<div class="actions" @click.stop>
+						<button class="btn btn-secondary" @click.stop="editCollection(col)">Edit</button>
+						<button class="btn " @click.stop="deleteCollection(col.id)">Delete</button>
 					</div>
-				</div>
-				<p class="meta">
-					<strong>Theme:</strong> {{ col.theme || '-' }}
-					<span class="separator">|</span>
-					<strong>Color:</strong> {{ col.color || '-' }}
-				</p>
-				<div>
-					<strong>Places ({{ (col.places || []).length }}):</strong>
-					<ul>
-						<li v-for="p in (col.places || [])" :key="p.id">{{ p.name }}</li>
-					</ul>
 				</div>
 			</div>
 		</div>
@@ -214,10 +209,20 @@ onMounted(async () => {
 
 .card {
 	background: #fff;
-	border: 1px solid #e3e3e3;
+	border: 2px solid #e3e3e3;
 	border-radius: 12px;
 	padding: 1rem 1.25rem;
 	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+	transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card.clickable {
+	cursor: pointer;
+}
+
+.card.clickable:hover {
+	background-color: #f8f8f8;
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 .card-header {
@@ -235,16 +240,6 @@ onMounted(async () => {
 	font-family: var(--font-accent);
     font-size:x-large;
 } */
-
-.meta {
-	margin: 0.5rem 0;
-	color: #444;
-}
-
-.separator {
-	margin: 0 0.5rem;
-	color: #999;
-}
 
 .muted {
 	color: #777;

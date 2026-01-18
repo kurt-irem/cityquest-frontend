@@ -25,6 +25,8 @@ async function onLogout() {
     <div class="accent-font">CityQuest</div>
     <div class="nav-links flex flex-row flex-gap-md">
       <router-link to="/home" class="nav-link">Home</router-link>
+      <router-link to="/places" class="nav-link">Places</router-link>
+      <router-link to="/collections" class="nav-link">Collections</router-link>
       <router-link to="/visits" class="nav-link">My Visits</router-link>
     </div>
     <div class="flex flex-row flex-gap-sm">

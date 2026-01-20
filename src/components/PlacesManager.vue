@@ -316,7 +316,9 @@ onMounted(() => {
       <div class="modal">
         <div class="modal-header">
           <h2>{{ editingId ? 'Edit Place' : 'New Place' }}</h2>
-          <button class="btn-ghost" @click="showForm = false">✕</button>
+          <button @click="showForm = false" class="icon-button" title="Close">
+            <span class="material-icons">close</span>
+          </button>
         </div>
 
         <label>Name *</label>
@@ -470,91 +472,6 @@ onMounted(() => {
 .empty {
   color: #666;
   margin-top: 0.5rem;
-}
-
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 50;
-}
-
-.modal {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  max-width: 720px;
-  width: min(720px, 95vw);
-  max-height: 90vh;
-  overflow: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  box-sizing: border-box;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.25rem;
-}
-
-.modal-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.modal-actions .btn-primary {
-  grid-column: 2;
-  justify-self: center;
-  width: 160px;
-}
-
-.modal-actions .btn-secondary {
-  grid-column: 3;
-  justify-self: end;
-  width: 140px;
-}
-
-.btn-ghost {
-  background: transparent;
-  border: none;
-  font-size: 1.1rem;
-  cursor: pointer;
-}
-
-.grid {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.grid-2 {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-input,
-textarea,
-select {
-  width: 100%;
-  padding: 0.55rem 0.75rem;
-  border: 1px solid #d2d2d2;
-  border-radius: 8px;
-  margin-top: 0.15rem;
-  margin-bottom: 0.35rem;
-}
-
-textarea {
-  min-height: 90px;
-  resize: vertical;
 }
 
 @media (max-width: 768px) {

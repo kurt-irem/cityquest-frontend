@@ -10,11 +10,13 @@ const id = computed(() => Number(route.params.id))
 
 const collection = ref(null)
 const places = ref([])
+const visits = ref([])
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
 
 const showForm = ref(false)
+const showAddPlace = ref(false)
 const formData = ref({ title: '', description: '', theme: '', color: '', placeIds: [], placeIdToAdd: '' })
 const isOwner = computed(() => !!collection.value?.createdByUserId)
 
@@ -39,6 +41,23 @@ async function loadPlaces() {
   } catch (e) {
     console.warn(e)
   }
+}
+
+async function loadVisits() {
+  try {
+    const res = await fetch('/api/visits/my-visits', { credentials: 'include' })
+    if (res.ok) {
+      visits.value = await res.json()
+    } else if (res.status === 401) {
+      visits.value = []
+    }
+  } catch (e) {
+    console.warn(e)
+  }
+}
+
+function isPlaceVisited(placeId) {
+  return visits.value.some(v => v.placeId === placeId)
 }
 
 function startEdit() {
@@ -96,6 +115,7 @@ async function addPlace(placeId) {
     if (!res.ok) throw new Error('Error adding place')
     success.value = 'Place added'
     formData.value.placeIdToAdd = ''
+    showAddPlace.value = false
     await loadCollection()
   } catch (e) { error.value = e.message || 'Error adding place' }
 }
@@ -111,8 +131,12 @@ async function removePlace(placeId) {
   } catch (e) { error.value = e.message || 'Error removing place' }
 }
 
+function handlePlaceVisited() {
+  loadVisits()
+}
+
 onMounted(async () => {
-  await Promise.all([loadCollection(), loadPlaces()])
+  await Promise.all([loadCollection(), loadPlaces(), loadVisits()])
   if (route.query.edit) startEdit()
 })
 </script>
@@ -129,40 +153,36 @@ onMounted(async () => {
     <div v-else-if="!collection" class="muted">Not found</div>
 
     <div v-else class="card">
-      <header class="flex flex-between" style="align-items:center;">
+      <header class="header-row">
         <div>
-          <h2>{{ collection.title }}</h2>
-          <p v-if="collection.description" class="muted">{{ collection.description }}</p>
+          <h1 class="title">{{ collection.title }}</h1>
+          <p v-if="collection.description" class="description">{{ collection.description }}</p>
+          <div class="tags-row" v-if="collection.theme">
+            <span class="pill theme-pill">{{ collection.theme }}</span>
+          </div>
         </div>
-        <div class="flex flex-gap-sm">
-          <button class="btn btn-secondary" v-if="isOwner" @click="startEdit">Edit</button>
-          <button class="btn btn-error" v-if="isOwner" @click="deleteCollection">Delete</button>
+        <div class="actions">
+          <button v-if="isOwner" @click="startEdit" class="icon-button" title="Edit">
+            <span class="material-icons">edit</span>
+          </button>
+          <button v-if="isOwner" @click="deleteCollection" class="icon-button" title="Delete">
+            <span class="material-icons">delete</span>
+          </button>
         </div>
       </header>
 
-      <p class="meta">
-        <strong>Theme:</strong> {{ collection.theme || '-' }}
-        <span class="separator">|</span>
-        <strong>Color:</strong> {{ collection.color || '-' }}
-      </p>
-
-      <section>
-        <strong>Places ({{ (collection.places || []).length }}):</strong>
-        <div class="grid grid-2" style="margin-top:0.5rem;">
-          <div v-for="p in (collection.places || [])" :key="p.id">
-            <PlaceCard :place="p" />
-            <div v-if="isOwner" class="flex" style="margin-top:0.5rem;">
-              <button class="btn btn-outline btn-sm" @click="removePlace(p.id)">Remove</button>
-            </div>
-          </div>
+      <section class="places-section">
+        <div class="section-header">
+          <strong>Places ({{ (collection.places || []).length }})</strong>
+          <button v-if="isOwner" class="btn btn-secondary btn-sm" @click="showAddPlace = true">+ Add Place</button>
         </div>
-
-        <div v-if="isOwner" class="flex flex-gap-sm" style="margin-top:0.5rem;">
-          <select v-model.number="formData.placeIdToAdd" style="min-width: 200px;">
-            <option disabled value="">Add place…</option>
-            <option v-for="p in places" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
-          <button class="btn btn-secondary" @click="formData.placeIdToAdd ? addPlace(formData.placeIdToAdd) : null">Add</button>
+        <div class="places-list">
+          <div v-for="p in (collection.places || [])" :key="p.id" class="place-item">
+            <PlaceCard :place="p" :hasVisited="isPlaceVisited(p.id)" @visited="handlePlaceVisited" />
+            <button v-if="isOwner" @click="removePlace(p.id)" class="icon-button place-remove" title="Remove">
+              <span class="material-icons">close</span>
+            </button>
+          </div>
         </div>
       </section>
     </div>
@@ -197,20 +217,46 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+
+    <div v-if="showAddPlace" class="modal-overlay" @click.self="showAddPlace = false">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>Add Place to Collection</h2>
+          <button class="btn btn-ghost" @click="showAddPlace = false">✕</button>
+        </div>
+
+        <label>Select Place</label>
+        <select v-model.number="formData.placeIdToAdd">
+          <option disabled value="">Choose a place…</option>
+          <option v-for="p in places" :key="p.id" :value="p.id">{{ p.name }}</option>
+        </select>
+
+        <div class="modal-actions">
+          <button class="btn btn-primary" :disabled="!formData.placeIdToAdd" @click="formData.placeIdToAdd ? addPlace(formData.placeIdToAdd) : null">Add</button>
+          <button class="btn btn-secondary" @click="showAddPlace = false">Cancel</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .container { padding: 2rem 0; }
-.card { background: #fff; border: 1px solid #e3e3e3; border-radius: 12px; padding: 1rem 1.25rem; }
+.card { background: #fff; border: 1px solid #e3e3e3; border-radius: 12px; padding: 1.25rem 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 .muted { color: #777; }
-.meta { margin: 0.5rem 0; color: #444; }
-.separator { margin: 0 0.5rem; color: #999; }
-.place-list { margin-top: 0.5rem; }
-.grid { display: grid; gap: 0.75rem; }
-.grid-2 { grid-template-columns: repeat(2, 1fr); }
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; padding:1rem; z-index:50; }
-.modal { background:#fff; border-radius:12px; padding:1.5rem; max-width:720px; width:100%; max-height:90vh; overflow:auto; box-shadow:0 10px 30px rgba(0, 0, 0, 0.1); }
-.modal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
-.modal-actions { display:flex; gap:0.75rem; margin-top:1rem; }
+.header-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.title { margin: 0; font-size: 1.8rem; letter-spacing: 1px; }
+.description { margin: 0.35rem 0 0.5rem; color: #555; }
+.actions { display: flex; gap: 0.5rem; }
+.tags-row { display: flex; gap: 0.5rem; align-items: center; }
+.pill { border: 1px solid #dcdcdc; background: #f7f7f7; border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.9rem; color: #333; }
+.theme-pill { background: #e5f0fd; border-color: #c5dbfb; color: #0f4fa8; }
+.places-section { margin-top: 1rem; }
+.section-header { margin-bottom: 0.5rem; color: #333; display: flex; justify-content: space-between; align-items: center; }
+.places-list { display: flex; flex-direction: column; gap: 0.75rem; }
+.place-item { display: flex; flex-direction: row; gap: 0.5rem; align-items: stretch; }
+.place-item > :first-child { flex-grow: 1; }
+.place-item .icon-button { flex-shrink: 0; align-self: flex-start; }
+.add-place-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
+.add-place-row select { min-width: 200px; }
 </style>

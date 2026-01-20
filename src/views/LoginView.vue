@@ -282,7 +282,7 @@ async function login() {
   }
 
   .hero-title {
-    font-size: 2rem;
+    font-size: 2.25rem;
     
   }
 

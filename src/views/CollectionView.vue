@@ -5,6 +5,9 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const collections = ref([])
 const places = ref([])
+const visits = ref([])
+
+const iconOptions = ['bookmark', 'ac_unit', 'sunny', 'local_cafe', 'restaurant', 'account_balance']
 
 const loading = ref(false)
 const error = ref('')
@@ -12,12 +15,16 @@ const success = ref('')
 
 const showForm = ref(false)
 const editingId = ref(null)
+
+const colorOptions = ['#71a2db', '#C7D0EE', '#F4A261', '#8BC34A', '#FF8A80', '#9C27B0']
+
 const formData = ref({
 	title: '',
 	description: '',
 	theme: '',
-	color: '',
-	placeIds: []
+	color: colorOptions[0],
+	placeIds: [],
+	icon: 'bookmark'
 })
 
 const isEditing = computed(() => editingId.value !== null)
@@ -46,9 +53,28 @@ async function loadPlaces() {
 	}
 }
 
+async function loadVisits() {
+	try {
+		const res = await fetch('/api/visits/my-visits', { credentials: 'include' })
+		if (res.ok) {
+			visits.value = await res.json()
+		}
+	} catch (e) {
+		console.warn(e)
+	}
+}
+
+function visitedLabel(col) {
+	const ids = (col.places || []).map(p => p.id)
+	const total = ids.length
+	if (total === 0) return '0/0 visited'
+	const visitedCount = visits.value.filter(v => ids.includes(v.placeId)).length
+	return `${visitedCount}/${total} visited`
+}
+
 function resetForm() {
 	editingId.value = null
-	formData.value = { title: '', description: '', theme: '', color: '', placeIds: [] }
+	formData.value = { title: '', description: '', theme: '', color: colorOptions[0], placeIds: [], icon: 'bookmark' }
 }
 
 function editCollection(col) {
@@ -57,8 +83,9 @@ function editCollection(col) {
 		title: col.title || '',
 		description: col.description || '',
 		theme: col.theme || '',
-		color: col.color || '',
-		placeIds: (col.places || []).map(p => p.id)
+		color: col.color || colorOptions[0],
+		placeIds: (col.places || []).map(p => p.id),
+		icon: col.icon || 'bookmark'
 	}
 	showForm.value = true
 }
@@ -110,9 +137,9 @@ async function deleteCollection(id) {
 	}
 }
 
-onMounted(async () => {
-	await Promise.all([loadCollections(), loadPlaces()])
-})
+	onMounted(async () => {
+		await Promise.all([loadCollections(), loadPlaces(), loadVisits()])
+	})
 </script>
 
 <template>
@@ -131,13 +158,20 @@ onMounted(async () => {
 			<div v-if="collections.length === 0" class="empty">No collections yet</div>
 			<div v-else class="card clickable" :style="{ borderColor: col.color || '#e3e3e3' }" v-for="col in collections" :key="col.id" @click="openCollection(col.id)">
 				<div class="card-header" >
-					<div>
+					<div class="card-left">
+						<div class="icon-circle" :style="{ borderColor: col.color || '#e3e3e3', color: col.color || '#333' }">
+							<span class="material-icons">{{ col.icon || 'bookmark' }}</span>
+						</div>
 						<h3 class="col-title">{{ col.title }}</h3>
+						<div class="muted">{{ visitedLabel(col) }}</div>
 					</div>
-					<div class="muted">Places: {{ (col.places || []).length }}</div>
 					<div class="actions" @click.stop>
-						<button class="btn btn-secondary" @click.stop="editCollection(col)">Edit</button>
-						<button class="btn " @click.stop="deleteCollection(col.id)">Delete</button>
+						<button class="icon-button" title="Edit" @click.stop="editCollection(col)">
+							<span class="material-icons">edit</span>
+						</button>
+						<button class="icon-button" title="Delete" @click.stop="deleteCollection(col.id)">
+							<span class="material-icons">delete</span>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -163,19 +197,32 @@ onMounted(async () => {
 					</div>
 					<div>
 						<label>Color</label>
-						<input v-model="formData.color" type="text" placeholder="#F4A261" />
+						<div class="color-choices">
+							<button
+								v-for="c in colorOptions"
+								:key="c"
+								type="button"
+								class="color-swatch"
+								:style="{ backgroundColor: c, boxShadow: formData.color === c ? '0 0 0 3px rgba(0,0,0,0.1)' : 'none' }"
+								@click="formData.color = c"
+								title="Choose color"
+							></button>
+						</div>
 					</div>
 				</div>
 
-				<label>Select places</label>
-				<div class="place-list">
-					<div v-if="places.length === 0" class="muted">No places available</div>
-					<div v-else class="grid grid-2">
-						<label v-for="p in places" :key="p.id" class="checkbox-row">
-							<input type="checkbox" :value="p.id" v-model="formData.placeIds" />
-							<span>{{ p.name }}<span v-if="p.category"> — {{ p.category }}</span></span>
-						</label>
-					</div>
+				<label>Icon</label>
+				<div class="icon-choices">
+					<button
+						v-for="icon in iconOptions"
+						:key="icon"
+						type="button"
+						class="icon-chip"
+						:class="{ active: formData.icon === icon }"
+						@click="formData.icon = icon"
+					>
+						<span class="material-icons">{{ icon }}</span>
+					</button>
 				</div>
 
 				<div class="modal-actions">
@@ -228,18 +275,44 @@ onMounted(async () => {
 .card-header {
 	display: flex;
 	justify-content: space-between;
-	align-items: flex-start;
+	align-items: center;
 	gap: 1rem;
+}
+
+.card-left {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+}
+
+.icon-circle {
+	width: 44px;
+	height: 44px;
+	border: 2px solid #e3e3e3;
+	border-radius: 50%;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	background: #fff;
+}
+
+.icon-circle .material-icons {
+	font-size: 22px;
+}
+
+.card-left .muted {
+	margin-top: 0;
 }
 
 .actions {
 	display: flex;
 	gap: 0.5rem;
 }
-/* .col-title {
+.col-title {
 	font-family: var(--font-accent);
     font-size:x-large;
-} */
+	letter-spacing: 3px;
+}
 
 .muted {
 	color: #777;
@@ -251,48 +324,6 @@ onMounted(async () => {
 	margin-top: 1rem;
 }
 
-.modal-overlay {
-	position: fixed;
-	inset: 0;
-	background: rgba(0, 0, 0, 0.4);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 1rem;
-	z-index: 50;
-}
-
-.modal {
-	background: #fff;
-	border-radius: 12px;
-	padding: 1.5rem;
-	max-width: 720px;
-	width: 100%;
-	max-height: 90vh;
-	overflow: auto;
-	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: 1rem;
-}
-
-.modal-actions {
-	display: flex;
-	gap: 0.75rem;
-	margin-top: 1rem;
-}
-
-.btn-ghost {
-	background: transparent;
-	border: none;
-	font-size: 1.1rem;
-	cursor: pointer;
-}
-
 .place-list {
 	max-height: 260px;
 	overflow: auto;
@@ -300,6 +331,56 @@ onMounted(async () => {
 	border: 1px solid #e3e3e3;
 	border-radius: 8px;
 	margin-top: 0.25rem;
+}
+
+.color-choices {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+}
+
+.color-swatch {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	cursor: pointer;
+	padding: 0;
+	transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.icon-choices {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.icon-chip {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.35rem;
+	padding: 0.35rem 0.75rem;
+	border-radius: 999px;
+	border: 1px solid #dcdcdc;
+	background: #f7f7f7;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.icon-chip.active {
+	border-color: #71a2db;
+	background: #e8f2ff;
+}
+
+.icon-chip .material-icons {
+	font-size: 20px;
+}
+
+.color-swatch:hover {
+	transform: translateY(-2px);
+	border-color: rgba(0, 0, 0, 0.2);
 }
 
 .checkbox-row {

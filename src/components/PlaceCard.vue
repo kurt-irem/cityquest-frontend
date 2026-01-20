@@ -14,10 +14,14 @@ const props = defineProps({
   showActions: {
     type: Boolean,
     default: false
+  },
+  hasVisited: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['edit', 'delete'])
+const emit = defineEmits(['edit', 'delete', 'visited'])
 
 const router = useRouter()
 const showVisitForm = ref(false)
@@ -89,6 +93,7 @@ async function submitVisit() {
     success.value = 'Visit saved!'
     showVisitForm.value = false
     visitForm.value = { visitDate: '', note: '', rating: null, image: '', tagsText: '' }
+    emit('visited', props.place.id)
   } catch (e) {
     error.value = e.message || 'Error saving visit'
   } finally {
@@ -124,13 +129,13 @@ async function submitAddToCollection() {
 
 <template>
     
-  <div class="place-card">
+  <div class="place-card" :class="{ 'visited-card': hasVisited }">
     <!-- Edit/Delete Actions -->
     <div v-if="showActions" class="card-actions">
-      <button @click.stop="emit('edit', place)" class="icon-btn" title="Edit">
+      <button @click.stop="emit('edit', place)" class="icon-button" title="Edit">
         <span class="material-icons">edit</span>
       </button>
-      <button @click.stop="emit('delete', place.id)" class="icon-btn delete" title="Delete">
+      <button @click.stop="emit('delete', place.id)" class="icon-button" title="Delete">
         <span class="material-icons">delete</span>
       </button>
     </div>
@@ -165,7 +170,7 @@ async function submitAddToCollection() {
         class="btn-action visited"
         @click="openVisitForm"
       >
-        Visited
+        {{ hasVisited ? 'Visit Again' : 'Visited' }}
       </button>
       <button 
         v-else-if="mode === 'collection'" 
@@ -247,6 +252,12 @@ async function submitAddToCollection() {
   gap: 1rem;
   padding: 1rem;
   position: relative;
+  transition: border-color 0.2s ease;
+}
+
+.place-card.visited-card {
+  border-color: #4caf50;
+  border-width: 2px;
 }
 
 .card-actions {
@@ -256,41 +267,6 @@ async function submitAddToCollection() {
   display: flex;
   gap: 0.25rem;
   z-index: 10;
-}
-
-.icon-btn {
-  background: white;
-  border: 1px solid #d9d9d9;
-  border-radius: 4px;
-  padding: 0.25rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.icon-btn .material-icons {
-  font-size: 18px;
-  color: #666;
-}
-
-.icon-btn:hover {
-  background: #f5f5f5;
-  border-color: #999;
-}
-
-.icon-btn:hover .material-icons {
-  color: #333;
-}
-
-.icon-btn.delete:hover {
-  background: #fee;
-  border-color: #fcc;
-}
-
-.icon-btn.delete:hover .material-icons {
-  color: #c33;
 }
 
 .image-container {

@@ -110,25 +110,31 @@ async function deleteCollection() {
 async function addPlace(placeId) {
   try {
     const res = await fetch(`/api/collections/${id.value}/places/${placeId}`, {
-      method: 'POST', credentials: 'include'
+      method: 'POST',
+      credentials: 'include'
     })
     if (!res.ok) throw new Error('Error adding place')
     success.value = 'Place added'
     formData.value.placeIdToAdd = ''
     showAddPlace.value = false
     await loadCollection()
-  } catch (e) { error.value = e.message || 'Error adding place' }
+  } catch (e) {
+    error.value = e.message || 'Error adding place'
+  }
 }
 
 async function removePlace(placeId) {
   try {
     const res = await fetch(`/api/collections/${id.value}/places/${placeId}`, {
-      method: 'DELETE', credentials: 'include'
+      method: 'DELETE',
+      credentials: 'include'
     })
     if (!res.ok) throw new Error('Error removing place')
     success.value = 'Place removed'
     await loadCollection()
-  } catch (e) { error.value = e.message || 'Error removing place' }
+  } catch (e) {
+    error.value = e.message || 'Error removing place'
+  }
 }
 
 function handlePlaceVisited() {
@@ -142,7 +148,9 @@ onMounted(async () => {
 </script>
 
 <template>
-    <header><NavBar /></header>
+  <header>
+    <NavBar />
+  </header>
   <div class="collection-detail container">
     <button class="btn btn-ghost" @click="$router.back()">← Back</button>
 
@@ -157,7 +165,7 @@ onMounted(async () => {
         <div>
           <h1 class="title">{{ collection.title }}</h1>
           <p v-if="collection.description" class="description">{{ collection.description }}</p>
-          <div class="tags-row" v-if="collection.theme">
+          <div v-if="collection.theme" class="tags-row">
             <span class="pill theme-pill">{{ collection.theme }}</span>
           </div>
         </div>
@@ -174,7 +182,7 @@ onMounted(async () => {
       <section class="places-section">
         <div class="section-header">
           <strong>Places ({{ (collection.places || []).length }})</strong>
-          <button v-if="isOwner" class="btn btn-secondary btn-sm" @click="showAddPlace = true">+ Add Place</button>
+          <button v-if="isOwner" class="btn btn-secondary" @click="showAddPlace = true">+ Add Place</button>
         </div>
         <div class="places-list">
           <div v-for="p in (collection.places || [])" :key="p.id" class="place-item">
@@ -241,22 +249,114 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.container { padding: 2rem 0; }
-.card { background: #fff; border: 1px solid #e3e3e3; border-radius: 12px; padding: 1.25rem 1.5rem; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-.muted { color: #777; }
-.header-row { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-.title { margin: 0; font-size: 1.8rem; letter-spacing: 1px; }
-.description { margin: 0.35rem 0 0.5rem; color: #555; }
-.actions { display: flex; gap: 0.5rem; }
-.tags-row { display: flex; gap: 0.5rem; align-items: center; }
-.pill { border: 1px solid #dcdcdc; background: #f7f7f7; border-radius: 999px; padding: 0.25rem 0.75rem; font-size: 0.9rem; color: #333; }
-.theme-pill { background: #e5f0fd; border-color: #c5dbfb; color: #0f4fa8; }
-.places-section { margin-top: 1rem; }
-.section-header { margin-bottom: 0.5rem; color: #333; display: flex; justify-content: space-between; align-items: center; }
-.places-list { display: flex; flex-direction: column; gap: 0.75rem; }
-.place-item { display: flex; flex-direction: row; gap: 0.5rem; align-items: stretch; }
-.place-item > :first-child { flex-grow: 1; }
-.place-item .icon-button { flex-shrink: 0; align-self: flex-start; }
-.add-place-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
-.add-place-row select { min-width: 200px; }
+.container {
+  padding: 2rem 0.5rem;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e3e3e3;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.muted {
+  color: #777;
+}
+
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.8rem;
+  letter-spacing: 1px;
+}
+
+.description {
+  margin: 0.35rem 0 0.5rem;
+  color: #555;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tags-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pill {
+  border: 1px solid #dcdcdc;
+  background: #f7f7f7;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.theme-pill {
+  background: #e5f0fd;
+  border-color: #c5dbfb;
+  color: #0f4fa8;
+}
+
+.places-section {
+  margin-top: 1rem;
+}
+
+.section-header {
+  margin-bottom: 0.5rem;
+  color: #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  strong{
+    font-size: large;
+    padding-top: 5px;
+    padding-left: 5px;
+  }
+}
+
+.places-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.place-item {
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.place-item > :first-child {
+  flex-grow: 1;
+}
+
+.place-item .icon-button {
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+
+.add-place-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.add-place-row select {
+  min-width: 200px;
+}
 </style>

@@ -16,7 +16,7 @@ const success = ref('')
 const showForm = ref(false)
 const editingId = ref(null)
 
-const colorOptions = ['#71a2db', '#C7D0EE', '#F4A261', '#8BC34A', '#FF8A80', '#9C27B0']
+const colorOptions = ['#71a2db', '#A7AAE1', '#F1B780', '#9CAB84', '#F2AEBB', '#ACB9BE']
 
 const formData = ref({
 	title: '',
@@ -68,7 +68,8 @@ function visitedLabel(col) {
 	const ids = (col.places || []).map(p => p.id)
 	const total = ids.length
 	if (total === 0) return '0/0 visited'
-	const visitedCount = visits.value.filter(v => ids.includes(v.placeId)).length
+	const visitedPlaces = new Set(visits.value.map(v => v.placeId))
+	const visitedCount = ids.filter(id => visitedPlaces.has(id)).length
 	return `${visitedCount}/${total} visited`
 }
 
@@ -157,21 +158,23 @@ async function deleteCollection(id) {
 		<div v-else class="list">
 			<div v-if="collections.length === 0" class="empty">No collections yet</div>
 			<div v-else class="card clickable" :style="{ borderColor: col.color || '#e3e3e3' }" v-for="col in collections" :key="col.id" @click="openCollection(col.id)">
-				<div class="card-header" >
+				<div class="card-header">
 					<div class="card-left">
 						<div class="icon-circle" :style="{ borderColor: col.color || '#e3e3e3', color: col.color || '#333' }">
 							<span class="material-icons">{{ col.icon || 'bookmark' }}</span>
 						</div>
-						<h3 class="col-title">{{ col.title }}</h3>
-						<div class="muted">{{ visitedLabel(col) }}</div>
+						<div class="col-title">{{ col.title }}</div>
 					</div>
-					<div class="actions" @click.stop>
-						<button class="icon-button" title="Edit" @click.stop="editCollection(col)">
-							<span class="material-icons">edit</span>
-						</button>
-						<button class="icon-button" title="Delete" @click.stop="deleteCollection(col.id)">
-							<span class="material-icons">delete</span>
-						</button>
+					<div class="card-meta">
+						<div class="muted">{{ visitedLabel(col) }}</div>
+						<div class="actions" @click.stop>
+							<button class="icon-button" title="Edit" @click.stop="editCollection(col)">
+								<span class="material-icons">edit</span>
+							</button>
+							<button class="icon-button" title="Delete" @click.stop="deleteCollection(col.id)">
+								<span class="material-icons">delete</span>
+							</button>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -189,12 +192,28 @@ async function deleteCollection(id) {
 
 				<label>Description</label>
 				<textarea v-model="formData.description" placeholder="Description"></textarea>
+				<div>
+					<label>Theme</label>
+					<input v-model="formData.theme" type="text" placeholder="e.g. Food, Travel" />
+				</div>
 
 				<div class="grid grid-2">
 					<div>
-						<label>Theme</label>
-						<input v-model="formData.theme" type="text" placeholder="e.g. Food, Travel" />
+						<label>Icon</label>
+						<div class="icon-choices">
+						<button
+							v-for="icon in iconOptions"
+							:key="icon"
+							type="button"
+							class="icon-chip"
+							:class="{ active: formData.icon === icon }"
+							@click="formData.icon = icon"
+						>
+							<span class="material-icons">{{ icon }}</span>
+						</button>
+						</div>
 					</div>
+					
 					<div>
 						<label>Color</label>
 						<div class="color-choices">
@@ -209,20 +228,6 @@ async function deleteCollection(id) {
 							></button>
 						</div>
 					</div>
-				</div>
-
-				<label>Icon</label>
-				<div class="icon-choices">
-					<button
-						v-for="icon in iconOptions"
-						:key="icon"
-						type="button"
-						class="icon-chip"
-						:class="{ active: formData.icon === icon }"
-						@click="formData.icon = icon"
-					>
-						<span class="material-icons">{{ icon }}</span>
-					</button>
 				</div>
 
 				<div class="modal-actions">
@@ -251,16 +256,17 @@ async function deleteCollection(id) {
 .list {
 	display: flex;
 	flex-direction: column;
-	gap: 1rem;
+	gap: 1.25rem;
+	margin:  1rem;
 }
 
 .card {
 	background: #fff;
 	border: 2px solid #e3e3e3;
 	border-radius: 12px;
-	padding: 1rem 1.25rem;
-	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
-	transition: background-color 0.2s ease, box-shadow 0.2s ease;
+	padding: 1.2rem 1.25rem;
+	box-shadow: 0 4px 4px 2px rgba(0, 0, 0, 0.05);
+
 }
 
 .card.clickable {
@@ -283,6 +289,13 @@ async function deleteCollection(id) {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
+	flex: 1;
+}
+
+.card-meta {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
 }
 
 .icon-circle {
@@ -300,22 +313,23 @@ async function deleteCollection(id) {
 	font-size: 22px;
 }
 
-.card-left .muted {
-	margin-top: 0;
-}
-
 .actions {
 	display: flex;
 	gap: 0.5rem;
 }
 .col-title {
 	font-family: var(--font-accent);
-    font-size:x-large;
+    font-size: 1.75rem;
 	letter-spacing: 3px;
+	font-weight: bold;
+	padding-right: 1rem;
+	padding-left: 0.5rem;
 }
 
 .muted {
 	color: #777;
+	display: flex;
+	font-size: 1.1rem;
 }
 
 .loading,
@@ -405,14 +419,35 @@ textarea {
 }
 
 @media (max-width: 640px) {
+
 	.header-row {
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0rem 0.5rem;
+	}
+
+	.card-header {
 		flex-direction: column;
 		align-items: flex-start;
 		gap: 0.75rem;
 	}
 
+	.card-left {
+		width: 100%;
+		justify-content: center;
+	}
+
+	.card-meta {
+		width: 100%;
+		justify-content: center;
+		align-items: center;
+	}
+	
+
 	.actions {
-		flex-direction: column;
+		flex-direction: row;
+		gap: 0.5rem;
 	}
 }
 </style>

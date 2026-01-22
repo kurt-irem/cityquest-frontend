@@ -483,59 +483,6 @@ async function submitAddToCollection() {
   background: #b0cccb;
 }
 
-/* Modal styles
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  z-index: 50;
-}
-
-.modal {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  max-width: 640px;
-  width: 100%;
-  max-height: 90vh;
-  overflow: auto;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
-
-.modal-header h2 {
-  margin: 0;
-} */
-
-/* .btn-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-}
-
-.btn-close:hover {
-  color: #333;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
-} */
-
 .alert {
   padding: 0.75rem;
   border-radius: 8px;

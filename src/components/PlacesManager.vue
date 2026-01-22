@@ -367,6 +367,7 @@ onMounted(() => {
           <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
         </select>
 
+        <!-- For future Google Api Integration -->
         <!-- <div class="grid grid-2" style="margin-top: 0.75rem;">
           <div>
             <label>Latitude</label>

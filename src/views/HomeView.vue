@@ -164,7 +164,6 @@ onMounted(() => {
   grid-template-columns: 3fr 1fr;
   width: 100%;
   height: 100%;
-  /* align-items: start; */
 }
 
 .places {
@@ -181,8 +180,6 @@ onMounted(() => {
   flex-direction: column;
   gap: 1rem;
   overflow-y: auto;
-  /* height: 100%;
-  align-content: start; */
 }
 
 .add-places {

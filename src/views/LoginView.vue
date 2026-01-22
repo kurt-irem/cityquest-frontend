@@ -115,7 +115,6 @@ async function login() {
   justify-content: center;
   height: 100vh;
   padding: var(--space-lg, 2rem);
-  /* background: linear-gradient(135deg, #f5f5f5 0%, #fafafa 100%); */
 }
 
 .hero-section {

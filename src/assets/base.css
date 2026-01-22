@@ -14,7 +14,7 @@ body {
   color: var(--color-text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-  background-image: linear-gradient(rgba(253, 251, 247, 0.96), rgba(255, 255, 255, 0.97)), url("./silhouette-skyline-illustration-.png");
+  background-image: linear-gradient(rgba(253, 251, 247, 0.96), rgba(255, 255, 255, 0.97)), url("./bg-image.png");
   background-size: cover;
   background-position: bottom;
   background-repeat: no-repeat;

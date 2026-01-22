@@ -2,12 +2,15 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useAlertDismiss } from '@/composables/useAlertDismiss'
 
 const username = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
+
+useAlertDismiss(success, error)
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -172,7 +175,6 @@ async function login() {
   display: flex;
   flex-direction: column;
   margin-bottom: var(--space-lg, 2rem);
-  padding-right: 30px;
 }
 
 .form-group label {

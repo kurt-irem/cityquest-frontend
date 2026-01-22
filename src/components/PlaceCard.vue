@@ -38,6 +38,31 @@ const visitForm = ref({
 
 const collections = ref([])
 const selectedCollectionId = ref(null)
+const imageFile = ref(null)
+const imagePreview = ref(null)
+
+function handleImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  
+  if (!file.type.startsWith('image/')) {
+    error.value = 'Please select an image file'
+    return
+  }
+  
+  if (file.size > 5 * 1024 * 1024) {
+    error.value = 'Image must be smaller than 5MB'
+    return
+  }
+  
+  imageFile.value = file
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreview.value = e.target?.result
+    visitForm.value.image = imagePreview.value
+  }
+  reader.readAsDataURL(file)
+}
 
 function openVisitForm() {
   error.value = ''
@@ -47,6 +72,8 @@ function openVisitForm() {
 
 function closeVisitForm() {
   showVisitForm.value = false
+  imageFile.value = null
+  imagePreview.value = null
 }
 
 async function loadCollections() {
@@ -93,6 +120,8 @@ async function submitVisit() {
     success.value = 'Visit saved!'
     showVisitForm.value = false
     visitForm.value = { visitDate: '', note: '', rating: null, image: '', tagsText: '' }
+    imageFile.value = null
+    imagePreview.value = null
     emit('visited', props.place.id)
   } catch (e) {
     error.value = e.message || 'Error saving visit'
@@ -149,28 +178,27 @@ async function submitAddToCollection() {
     <!-- Content -->
     <div class="place-content">
       <div class="place-header">
-        <h2 class="place-name">{{ place.name }}</h2>
+        <div class="place-name">{{ place.name }}</div>
         <a v-if="place.googleMapsUrl" :href="place.googleMapsUrl" target="_blank" class="maps-icon" title="View on Google Maps">
           <span class="material-icons">open_in_new</span>
         </a>
+        <div v-if="place.category || (place.tags && place.tags.length > 0)" class="tags-inline">
+          <span v-if="place.category" class="tag">{{ place.category }}</span>
+          <span v-for="tag in (place.tags || []).slice(0, 1)" :key="tag" class="tag">{{ tag }}</span>
+        </div>
+        
       </div>
       <p class="place-address">{{ place.address || 'No address' }}</p>
-    </div>
-
-    <!-- Tags -->
-    <div v-if="place.category || (place.tags && place.tags.length > 0)" class="tags-container">
-      <span v-if="place.category" class="tag">{{ place.category }}</span>
-      <span v-for="tag in (place.tags || []).slice(0, 1)" :key="tag" class="tag">{{ tag }}</span>
     </div>
 
     <!-- Button -->
     <div class="button-container">
       <button 
         v-if="mode === 'visit'" 
-        class="btn-action visited"
+        :class="{ 'btn-action visit': !hasVisited, 'btn-action visited': hasVisited }"
         @click="openVisitForm"
       >
-        {{ hasVisited ? 'Visit Again' : 'Visited' }}
+        {{ hasVisited ? 'Visit Again' : 'Log Visit' }}
       </button>
       <button 
         v-else-if="mode === 'collection'" 
@@ -188,7 +216,9 @@ async function submitAddToCollection() {
       <div class="modal-header">
         <h2 v-if="mode === 'visit'">Log Visit</h2>
         <h2 v-else>Add to Collection</h2>
-        <button class="btn-close" @click="closeVisitForm">✕</button>
+        <button @click="closeVisitForm" class="icon-button" title="Close">
+            <span class="material-icons">close</span>
+          </button>
       </div>
 
       <div v-if="error" class="alert alert-error">{{ error }}</div>
@@ -213,14 +243,40 @@ async function submitAddToCollection() {
               <option :value="5">5</option>
             </select>
           </div>
-          <div>
-            <label>Image URL</label>
-            <input v-model="visitForm.image" type="url" placeholder="https://..." />
+        </div>
+
+        <label>Image</label>
+        <div class="image-upload-section">
+          <div class="upload-area">
+            <input 
+              type="file" 
+              id="image-upload" 
+              accept="image/*" 
+              @change="handleImageUpload"
+              class="file-input"
+            />
+            <label for="image-upload" class="upload-label">
+              <span class="material-icons">image</span>
+              <span>Choose image or drag & drop</span>
+            </label>
+          </div>
+          <div v-if="imagePreview" class="image-preview">
+            <img :src="imagePreview" :alt="'Preview'" />
+            <button type="button" @click="imageFile = null; imagePreview = null; visitForm.image = ''" class="remove-btn" title="Remove image">✕</button>
           </div>
         </div>
 
+        <!-- <label>Image URL (alternative)</label>
+        <input 
+          v-model="visitForm.image" 
+          type="url" 
+          placeholder="https://..." 
+          :disabled="!!imageFile"
+          class="url-input"
+        /> -->s
+
         <label>Tags (comma separated)</label>
-        <input v-model="visitForm.tagsText" type="text" placeholder="e.g. sunny, family, quick stop" />
+        <input v-model="visitForm.tagsText" type="text" placeholder="e.g. lunch, crowded, favorite" />
       </template>
 
       <template v-else>
@@ -252,12 +308,13 @@ async function submitAddToCollection() {
   gap: 1rem;
   padding: 1rem;
   position: relative;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .place-card.visited-card {
-  border-color: #4caf50;
-  border-width: 2px;
+  border-color: #6ba3a0;
+  background: #f6f9f8;
+  box-shadow: 0 1px 3px rgba(107, 163, 160, 0.5);
 }
 
 .card-actions {
@@ -271,8 +328,8 @@ async function submitAddToCollection() {
 
 .image-container {
   flex-shrink: 0;
-  width: 116px;
-  height: 93px;
+  width: 100px;
+  height: 80px;
   background: #f5f5f5;
   border-radius: 4px;
   overflow: hidden;
@@ -299,8 +356,9 @@ async function submitAddToCollection() {
 .place-header {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin-bottom: 0.25rem;
+  flex-wrap: wrap;
 }
 
 .place-name {
@@ -313,6 +371,14 @@ async function submitAddToCollection() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.tags-inline {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .maps-icon {
@@ -322,6 +388,7 @@ async function submitAddToCollection() {
   display: flex;
   align-items: center;
   cursor: pointer;
+  padding-bottom: 5px;
 }
 
 .maps-icon .material-icons {
@@ -349,18 +416,27 @@ async function submitAddToCollection() {
   flex-wrap: wrap;
 }
 
+.tags-container {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .tag {
   background: #e5f0fd;
   color: black;
   padding: 0.25rem 0.75rem;
   border-radius: 20px;
   font-family: 'Manjari', sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   white-space: nowrap;
+  margin-left: 1rem;
 }
 
 .button-container {
   flex-shrink: 0;
+  padding-left: 1rem;
+  margin-right: 4rem;
 }
 
 .btn-action {
@@ -372,30 +448,42 @@ async function submitAddToCollection() {
   font-weight: 400;
   cursor: pointer;
   transition: all 0.2s ease;
+  
 }
 
 .btn-action.visited {
-  background: #6ba3a0;
-  color: white;
-  border: 2px solid #6ba3a0;
+  background: #c8d9d3;;
+  color: black;
+  border: 1px solid #6ba3a0;
 }
 
 .btn-action.visited:hover {
-  background: #5a8f8c;
+  background: #a8bcb7e0;
   border-color: #5a8f8c;
+}
+
+.btn-action.visit {
+  background: #E4D2EC;
+  color: black;
+  border: 1px solid #D6BBE3;
+}
+
+.btn-action.visit:hover {
+  background: #D6BBE3;
+  border-color: #C9A5D9;
 }
 
 .btn-action.add-to-collection {
   background: #c1dbda;
   color: black;
-  border: 2px solid #367565;
+  border: 1px solid #367565;
 }
 
 .btn-action.add-to-collection:hover {
   background: #b0cccb;
 }
 
-/* Modal styles */
+/* Modal styles
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -427,9 +515,9 @@ async function submitAddToCollection() {
 
 .modal-header h2 {
   margin: 0;
-}
+} */
 
-.btn-close {
+/* .btn-close {
   background: none;
   border: none;
   font-size: 1.5rem;
@@ -446,7 +534,7 @@ async function submitAddToCollection() {
   display: flex;
   gap: 0.75rem;
   margin-top: 1rem;
-}
+} */
 
 .alert {
   padding: 0.75rem;
@@ -462,6 +550,74 @@ async function submitAddToCollection() {
 .alert-success {
   background: #efe;
   color: #3c3;
+}
+
+.image-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.upload-area {
+  position: relative;
+  border: 2px dashed #d2d2d2;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.upload-area:hover {
+  border-color: #71a2db;
+  background: #f0f5fa;
+}
+
+.file-input {
+  display: none;
+}
+
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.upload-label .material-icons {
+  font-size: 32px;
+  color: #71a2db;
+}
+
+.upload-label span:last-child {
+  color: #666;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.image-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  border: 1px solid #d2d2d2;
+}
+
+
+
+.url-input:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
 }
 
 .grid {
@@ -533,5 +689,133 @@ label:first-of-type {
 
 .btn-secondary:hover {
   background: #d0d0d0;
+}
+
+/* ===========================
+   RESPONSIVE DESIGN
+   =========================== */
+
+@media (max-width: 768px) {
+  .place-card {
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .image-container {
+    width: 50px;
+    height: 50px;
+  }
+
+  .place-header {
+    gap: 0.5rem;
+    margin-bottom: 0.15rem;
+  }
+
+  .place-name {
+    font-size: 20px;
+  }
+
+  .place-address {
+    font-size: 16px;
+  }
+
+  .tag {
+    font-size: 13px;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .maps-icon .material-icons {
+    font-size: 18px;
+  }
+
+  .btn-action {
+    padding: 0.4rem 1rem;
+    font-size: 16px;
+  }
+
+  .button-container {
+    padding-right: 2rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .place-card {
+    flex-direction: row;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    align-items: stretch;
+  }
+
+  .image-container {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+  }
+
+  .place-content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .place-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0;
+  }
+
+  .place-name {
+    font-size: 18px;
+  }
+
+  .maps-icon {
+    align-self: flex-start;
+  }
+
+  .tags-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    width: 100%;
+  }
+
+  .place-address {
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .tag {
+    font-size: 12px;
+    padding: 0.15rem 0.5rem;
+    margin-left: 0;
+  }
+
+  .maps-icon .material-icons {
+    font-size: 16px;
+  }
+
+  .btn-action {
+    padding: 0.4rem 1rem;
+    font-size: 14px;
+    width: auto;
+    align-self: flex-start;
+  }
+
+  .button-container {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    display: flex;
+  }
+
+  .card-actions {
+    top: 0.25rem;
+    right: 0.25rem;
+  }
 }
 </style>

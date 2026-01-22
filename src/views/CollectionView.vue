@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAlertDismiss } from '@/composables/useAlertDismiss'
 
 const router = useRouter()
 const collections = ref([])
@@ -12,6 +13,8 @@ const iconOptions = ['bookmark', 'ac_unit', 'sunny', 'local_cafe', 'restaurant',
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
+
+useAlertDismiss(success, error)
 
 const showForm = ref(false)
 const editingId = ref(null)
@@ -345,56 +348,6 @@ async function deleteCollection(id) {
 	border: 1px solid #e3e3e3;
 	border-radius: 8px;
 	margin-top: 0.25rem;
-}
-
-.color-choices {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-	margin-top: 0.5rem;
-}
-
-.color-swatch {
-	width: 28px;
-	height: 28px;
-	border-radius: 50%;
-	border: 1px solid rgba(0, 0, 0, 0.08);
-	cursor: pointer;
-	padding: 0;
-	transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-}
-
-.icon-choices {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.5rem;
-}
-
-.icon-chip {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.35rem;
-	padding: 0.35rem 0.75rem;
-	border-radius: 999px;
-	border: 1px solid #dcdcdc;
-	background: #f7f7f7;
-	cursor: pointer;
-	font-family: inherit;
-}
-
-.icon-chip.active {
-	border-color: #71a2db;
-	background: #e8f2ff;
-}
-
-.icon-chip .material-icons {
-	font-size: 20px;
-}
-
-.color-swatch:hover {
-	transform: translateY(-2px);
-	border-color: rgba(0, 0, 0, 0.2);
 }
 
 .checkbox-row {

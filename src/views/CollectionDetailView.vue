@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAlertDismiss } from '@/composables/useAlertDismiss'
 import PlaceCard from '@/components/PlaceCard.vue'
 import NavBar from '@/components/NavBar.vue'
 
@@ -15,9 +16,15 @@ const loading = ref(false)
 const error = ref('')
 const success = ref('')
 
+useAlertDismiss(success, error)
+
+const iconOptions = ['bookmark', 'ac_unit', 'sunny', 'local_cafe', 'restaurant', 'account_balance']
+const colorOptions = ['#71a2db', '#A7AAE1', '#F1B780', '#9CAB84', '#F2AEBB', '#ACB9BE']
+
 const showForm = ref(false)
 const showAddPlace = ref(false)
-const formData = ref({ title: '', description: '', theme: '', color: '', placeIds: [], placeIdToAdd: '' })
+const searchPlaces = ref('')
+const formData = ref({ title: '', description: '', theme: '', color: '', icon: 'bookmark', placeIds: [], placeIdToAdd: '' })
 const isOwner = computed(() => !!collection.value?.createdByUserId)
 
 async function loadCollection() {
@@ -60,13 +67,22 @@ function isPlaceVisited(placeId) {
   return visits.value.some(v => v.placeId === placeId)
 }
 
+function filteredPlaces() {
+  const query = searchPlaces.value.toLowerCase()
+  return (collection.value?.places || []).filter(p => 
+    p.name.toLowerCase().includes(query) || 
+    (p.address && p.address.toLowerCase().includes(query))
+  )
+}
+
 function startEdit() {
   if (!collection.value) return
   formData.value = {
     title: collection.value.title || '',
     description: collection.value.description || '',
     theme: collection.value.theme || '',
-    color: collection.value.color || '',
+    color: collection.value.color || colorOptions[0],
+    icon: collection.value.icon || 'bookmark',
     placeIds: (collection.value.places || []).map(p => p.id),
     placeIdToAdd: ''
   }
@@ -181,11 +197,22 @@ onMounted(async () => {
 
       <section class="places-section">
         <div class="section-header">
-          <strong>Places ({{ (collection.places || []).length }})</strong>
+          <strong>Places ({{ filteredPlaces().length }})</strong>
           <button v-if="isOwner" class="btn btn-secondary" @click="showAddPlace = true">+ Add Place</button>
         </div>
+        
+        <div v-if="(collection.places || []).length > 0" class="search-bar">
+          <span class="material-icons search-icon">search</span>
+          <input 
+            v-model="searchPlaces"
+            type="text" 
+            placeholder="Search places..." 
+          />
+          <button v-if="searchPlaces" class="clear-btn" @click="searchPlaces = ''">✕</button>
+        </div>
+        
         <div class="places-list">
-          <div v-for="p in (collection.places || [])" :key="p.id" class="place-item">
+          <div v-for="p in filteredPlaces()" :key="p.id" class="place-item">
             <PlaceCard :place="p" :hasVisited="isPlaceVisited(p.id)" @visited="handlePlaceVisited" />
             <button v-if="isOwner" @click="removePlace(p.id)" class="icon-button place-remove" title="Remove">
               <span class="material-icons">close</span>
@@ -213,9 +240,38 @@ onMounted(async () => {
             <label>Theme</label>
             <input v-model="formData.theme" type="text" placeholder="e.g. Food, Travel" />
           </div>
+        </div>
+
+        <div class="grid grid-2">
+          <div>
+            <label>Icon</label>
+            <div class="icon-choices">
+            <button
+              v-for="icon in iconOptions"
+              :key="icon"
+              type="button"
+              class="icon-chip"
+              :class="{ active: formData.icon === icon }"
+              @click="formData.icon = icon"
+            >
+              <span class="material-icons">{{ icon }}</span>
+            </button>
+            </div>
+          </div>
+          
           <div>
             <label>Color</label>
-            <input v-model="formData.color" type="text" placeholder="#F4A261" />
+            <div class="color-choices">
+              <button
+                v-for="c in colorOptions"
+                :key="c"
+                type="button"
+                class="color-swatch"
+                :style="{ backgroundColor: c, boxShadow: formData.color === c ? '0 0 0 3px rgba(0,0,0,0.1)' : 'none' }"
+                @click="formData.color = c"
+                title="Choose color"
+              ></button>
+            </div>
           </div>
         </div>
 
@@ -358,5 +414,219 @@ onMounted(async () => {
 
 .add-place-row select {
   min-width: 200px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d2d2d2;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  background: #fafafa;
+}
+
+.search-icon {
+  color: #999;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.search-bar input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  font-size: 1rem;
+  font-family: 'Manjari', sans-serif;
+}
+
+.search-bar input:focus {
+  outline: none;
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.clear-btn:hover {
+  color: #333;
+}
+
+/* ===========================
+   RESPONSIVE DESIGN
+   =========================== */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem 1rem;
+
+  }
+
+  .card {
+    padding: 1rem 1rem;
+    border-radius: 10px;
+    background-color:transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+    letter-spacing: 0.5px;
+  }
+
+  .description {
+    margin: 0.25rem 0 0.35rem;
+    font-size: 0.95rem;
+  }
+
+  .actions {
+    align-self: flex-end;
+  }
+
+  .tags-row {
+    gap: 0.35rem;
+  }
+
+  .pill {
+    font-size: 0.85rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .section-header strong {
+    font-size: 1.05rem;
+    padding-top: 3px;
+    padding-left: 3px;
+  }
+
+  .search-bar {
+    padding: 0.4rem 0.6rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .search-icon {
+    font-size: 18px;
+  }
+
+  .search-bar input {
+    font-size: 0.95rem;
+  }
+
+  .clear-btn {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1rem 0.5rem;
+  }
+
+  .card {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .header-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .title {
+    font-size: 1.25rem;
+    letter-spacing: 0;
+    margin-bottom: 0.5rem;
+  }
+
+  .description {
+    margin: 0.15rem 0 0.25rem;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
+  .actions {
+    align-self: flex-end;
+    gap: 0.25rem;
+  }
+
+  .icon-button .material-icons {
+    font-size: 18px;
+  }
+
+  .tags-row {
+    gap: 0.25rem;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    font-size: 0.8rem;
+    padding: 0.15rem 0.5rem;
+  }
+
+  .theme-pill {
+    padding: 0.15rem 0.5rem;
+  }
+
+  .places-section {
+    margin-top: 0.75rem;
+  }
+
+  .section-header {
+    margin-bottom: 0.35rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .section-header strong {
+    font-size: 1rem;
+    padding: 0;
+  }
+
+  .section-header button {
+    width: 100%;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .search-bar {
+    padding: 0.4rem 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+  }
+
+  .search-icon {
+    font-size: 18px;
+  }
+
+  .search-bar input {
+    font-size: 1rem;
+  }
+
+  .clear-btn {
+    font-size: 1rem;
+  }
+
+  .places-list {
+    gap: 0.5rem;
+  }
 }
 </style>

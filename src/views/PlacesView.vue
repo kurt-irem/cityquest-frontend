@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useAlertDismiss } from '@/composables/useAlertDismiss'
 import NavBar from '@/components/NavBar.vue'
 import PlaceCard from '@/components/PlaceCard.vue'
 import PlacesManager from '@/components/PlacesManager.vue'
@@ -7,6 +8,8 @@ import PlacesManager from '@/components/PlacesManager.vue'
 const places = ref([])
 const loading = ref(false)
 const error = ref('')
+
+useAlertDismiss(ref(''), error)
 
 async function loadPlaces() {
   loading.value = true
@@ -56,5 +59,32 @@ onMounted(loadPlaces)
 .muted {
   color: #777;
   margin-top: 1rem;
+}
+
+/* ===========================
+   RESPONSIVE DESIGN
+   =========================== */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem 0.5rem;
+    margin: 0rem 0.75rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1rem 0;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
 }
 </style>

@@ -25,17 +25,17 @@ function navigateTo(path) {
 </script>
 
 <template>
-  <div class="navbar flex flex-between">
+  <div class="navbar">
     <div class="accent-font">CityQuest</div>
-    <div class="nav-links flex flex-row flex-gap-md">
+    <div class="nav-links">
       <router-link to="/home" class="nav-link">Home</router-link>
       <router-link to="/places" class="nav-link">Places</router-link>
       <router-link to="/collections" class="nav-link">Collections</router-link>
-      <router-link to="/visits" class="nav-link">My Visits</router-link>
+      <router-link to="/visits" class="nav-link">Visits</router-link>
     </div>
-    <div class="flex flex-row flex-gap-sm">
-      <div style="padding-right: 1em;">Logged in as: {{ username }}</div>
-      <button @click="onLogout" class="btn btn-secondary">Logout</button>
+    <div class="user-section">
+      <div class="username-label">{{ username }}</div>
+      <button @click="onLogout" class="nav-link logout-btn">Logout</button>
     </div>
 
     <!-- Mobile hamburger menu -->
@@ -58,7 +58,7 @@ function navigateTo(path) {
         </button>
         <button class="dropdown-item" @click="navigateTo('/visits')">
           <span class="material-icons">checklist</span>
-          <span>My Visits</span>
+          <span>Visits</span>
         </button>
         <div class="dropdown-divider"></div>
         <button class="dropdown-item logout" @click="onLogout">
@@ -72,14 +72,38 @@ function navigateTo(path) {
 
 <style scoped>
     .navbar {
-        background-color: var(--color-secondary);
-        padding: 0 2em;
+        display: flex;
+        justify-content: space-between;
         align-items: center;
+        background-color: var(--color-secondary);
+        padding: 0 2rem;
+        height: 45px;
+        max-width: 100vw;
+        box-sizing: border-box;
+    }
+
+    .accent-font {
+        font-size: 1.25rem;
+        font-weight: 600;
     }
 
     .nav-links {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
         flex: 1;
         justify-content: center;
+    }
+
+    .user-section {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .username-label {
+        font-size: 0.9rem;
+        color: rgba(0, 0, 0, 0.7);
     }
 
     .nav-link {
@@ -97,6 +121,15 @@ function navigateTo(path) {
     .nav-link.router-link-active {
         background-color: rgba(0, 0, 0, 0.2);
         font-weight: 500;
+    }
+
+    .logout-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: inherit;
+        font-family: inherit;
+        color: inherit;
     }
 
     /* Mobile menu - hidden on desktop */
@@ -173,7 +206,7 @@ function navigateTo(path) {
     /* Show mobile menu on small screens */
     @media (max-width: 768px) {
         .nav-links,
-        .username-label {
+        .user-section {
             display: none;
         }
 

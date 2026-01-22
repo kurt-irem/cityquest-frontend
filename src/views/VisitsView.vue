@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useAlertDismiss } from '@/composables/useAlertDismiss'
 import NavBar from '@/components/NavBar.vue'
 import VisitCard from '@/components/VisitCard.vue'
 
@@ -7,8 +8,13 @@ const myVisits = ref([])
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
+
+useAlertDismiss(success, error)
+
 const editingId = ref(null)
 const showForm = ref(false)
+const imageFile = ref(null)
+const imagePreview = ref(null)
 
 const formData = ref({
   visitDate: '',
@@ -17,6 +23,29 @@ const formData = ref({
   image: '',
   tagsText: ''
 })
+
+function handleImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  
+  if (!file.type.startsWith('image/')) {
+    error.value = 'Please select an image file'
+    return
+  }
+  
+  if (file.size > 5 * 1024 * 1024) {
+    error.value = 'Image must be smaller than 5MB'
+    return
+  }
+  
+  imageFile.value = file
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreview.value = e.target?.result
+    formData.value.image = imagePreview.value
+  }
+  reader.readAsDataURL(file)
+}
 
 async function loadMyVisits() {
   loading.value = true
@@ -41,12 +70,16 @@ function openEditForm(visit) {
     image: visit.image || '',
     tagsText: (visit.tags || []).join(', ')
   }
+  imageFile.value = null
+  imagePreview.value = null
   showForm.value = true
 }
 
 function closeForm() {
   showForm.value = false
   editingId.value = null
+  imageFile.value = null
+  imagePreview.value = null
   formData.value = { visitDate: '', note: '', rating: null, image: '', tagsText: '' }
 }
 
@@ -105,7 +138,7 @@ onMounted(loadMyVisits)
 <template>
   <header><NavBar /></header>
   <div class="visits-view container">
-    <h2>My Visits</h2>
+    <h2>Your Visits</h2>
 
     <div v-if="success" class="alert alert-success">{{ success }}</div>
     <div v-if="error" class="alert alert-error">{{ error }}</div>
@@ -116,11 +149,7 @@ onMounted(loadMyVisits)
     <div v-else class="list">
       <div class="grid">
         <div v-for="visit in myVisits" :key="visit.id" class="visit-item">
-          <VisitCard :visit="visit" />
-          <div class="actions">
-            <button class="btn btn-secondary btn-sm" @click="openEditForm(visit)">Edit</button>
-            <button class="btn btn-error btn-sm" @click="deleteVisit(visit.id)">Delete</button>
-          </div>
+          <VisitCard :visit="visit" @edit="openEditForm" @delete="deleteVisit" />
         </div>
       </div>
     </div>
@@ -150,9 +179,26 @@ onMounted(loadMyVisits)
               <option :value="5">5</option>
             </select>
           </div>
-          <div>
-            <label>Image URL</label>
-            <input v-model="formData.image" type="url" placeholder="https://..." />
+        </div>
+
+        <label>Image</label>
+        <div class="image-upload-section">
+          <div class="upload-area">
+            <input 
+              type="file" 
+              id="visit-image-upload" 
+              accept="image/*" 
+              @change="handleImageUpload"
+              class="file-input"
+            />
+            <label for="visit-image-upload" class="upload-label">
+              <span class="material-icons">image</span>
+              <span>Choose image or drag & drop</span>
+            </label>
+          </div>
+          <div v-if="imagePreview" class="image-preview">
+            <img :src="imagePreview" :alt="'Preview'" />
+            <button type="button" @click="imageFile = null; imagePreview = null; formData.image = ''" class="remove-btn">x</button>
           </div>
         </div>
 
@@ -186,12 +232,33 @@ onMounted(loadMyVisits)
 .visit-item {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  width: 100%;
 }
 
-.actions {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
+@media (max-width: 768px) {
+  .visits-view {
+    padding: 1.5rem 1rem;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .visits-view {
+    padding: 1rem;
+  }
+
+  .grid {
+    gap: 0.75rem;
+  }
+
+  .visit-item {
+    max-width: 100%;
+  }
 }
 
 .muted {
@@ -252,6 +319,63 @@ select {
   border-radius: 8px;
   margin-top: 0.25rem;
 }
+
+.image-upload-section {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.upload-area {
+  position: relative;
+  border: 2px dashed #d2d2d2;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: #fafafa;
+}
+
+.upload-area:hover {
+  border-color: #999;
+  background: #f0f0f0;
+}
+
+.file-input {
+  display: none;
+}
+
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.upload-label .material-icons {
+  font-size: 28px;
+  color: #999;
+}
+
+.image-preview {
+  position: relative;
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.image-preview img {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+
+
 
 textarea {
   min-height: 90px;

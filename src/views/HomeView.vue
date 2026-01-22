@@ -23,7 +23,13 @@ const progressPercent = computed(() => {
   return Math.min(100, Math.round((uniqueVisitsThisMonth.value / goal) * 100))
 })
 
-const categoryBadges = computed(() => summary.value?.categories || {})
+const categoryBadges = computed(() => {
+  const cats = summary.value?.categories || {}
+  // Filter out empty or null category names
+  return Object.fromEntries(
+    Object.entries(cats).filter(([key]) => key && key.trim())
+  )
+})
 
 async function loadSummary() {
   loadingSummary.value = true
@@ -76,16 +82,19 @@ onMounted(() => {
   <header><NavBar /></header>
   <div class="home-view">
     <div class="places">
-      <CollectionView />
+      <div class="container">
+        <CollectionView />
 
-      <section class="add-places">
-        <h2>Add New Places</h2>
-        <p class="description">Discover and add places from our collection to your own.</p>
-        <router-link to="/places" class="btn btn-primary">Browse All Places</router-link>
-      </section>
+        <section class="add-places">
+          <h2>Add New Places to Your Collections</h2>
+          <p class="description">Discover places from our collection or create your own!</p>
+          <router-link to="/places" class="btn btn-primary">Browse All Places</router-link>
+        </section>
+      </div>
     </div>
 
     <aside class="achievements">
+
       <div class="sidebar-header">
         <h3>Your Achievements</h3>
       </div>
@@ -94,7 +103,7 @@ onMounted(() => {
         <div class="goal-header">
           <h4>this months goal:</h4>
           <button class="change-goal-btn" @click="openGoalModal" title="Change goal">
-            <span class="material-icons">open_in_new</span>
+            <span class="material-icons">edit</span>
           </button>
         </div>
 
@@ -106,6 +115,7 @@ onMounted(() => {
           <div class="progress-main">{{ uniqueVisitsThisMonth }}/{{ monthlyGoal || 1 }}</div>
           <div class="muted">new places visited</div>
         </div>
+        
       </div>
 
       <div v-if="Object.keys(categoryBadges).length" class="sidebar-section">
@@ -154,6 +164,7 @@ onMounted(() => {
   grid-template-columns: 3fr 1fr;
   width: 100%;
   height: 100%;
+  /* align-items: start; */
 }
 
 .places {
@@ -164,19 +175,26 @@ onMounted(() => {
 }
 
 .achievements {
-  background-color: var(--color-primary-light);
+  background-color:  rgb(188, 211, 238, 0.6);;
   padding: 2em;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   overflow-y: auto;
+  /* height: 100%;
+  align-content: start; */
 }
 
 .add-places {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 2rem;
   background: #f9f9f9;
   border-radius: 12px;
   border: 1px solid #e3e3e3;
+  max-width: 100%;
+  width: 100%;
 }
 
 .add-places h2 {
@@ -196,8 +214,9 @@ onMounted(() => {
 
 .sidebar-header h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: 500;
+  letter-spacing: 0.1rem;
 }
 
 /* Monthly Goal Card */
@@ -226,15 +245,16 @@ onMounted(() => {
 .change-goal-btn {
   background: #71a2db;
   border: none;
-  border-radius: 50%;
-  width: 33px;
-  height: 25px;
+  border-radius: 100%;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.2s ease;
+
 }
 
 .change-goal-btn:hover {

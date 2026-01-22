@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useAlertDismiss } from '@/composables/useAlertDismiss'
 import PlaceCard from '@/components/PlaceCard.vue'
 
 const places = ref([])
@@ -7,6 +8,8 @@ const myPlaces = ref([])
 const loading = ref(false)
 const error = ref('')
 const success = ref('')
+
+useAlertDismiss(success, error)
 
 // Form state
 const showForm = ref(false)
@@ -17,9 +20,35 @@ const formData = ref({
   latitude: null,
   longitude: null,
   googlePlaceId: '',
-  googleMapsUrl: ''
+  googleMapsUrl: '',
+  image: ''
 })
 const editingId = ref(null)
+const imageFile = ref(null)
+const imagePreview = ref(null)
+
+function handleImageUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  
+  if (!file.type.startsWith('image/')) {
+    error.value = 'Please select an image file'
+    return
+  }
+  
+  if (file.size > 5 * 1024 * 1024) {
+    error.value = 'Image must be smaller than 5MB'
+    return
+  }
+  
+  imageFile.value = file
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    imagePreview.value = e.target?.result
+    formData.value.image = imagePreview.value
+  }
+  reader.readAsDataURL(file)
+}
 const activeSource = ref('all') // 'all' | 'mine'
 
 // Filter/Search
@@ -170,7 +199,9 @@ async function deletePlace(id) {
 // Edit place
 function editPlace(place) {
   editingId.value = place.id
-  formData.value = { ...place }
+  formData.value = { ...place, image: place.image || '' }
+  imageFile.value = null
+  imagePreview.value = null
   showForm.value = true
 }
 
@@ -183,9 +214,12 @@ function resetForm() {
     latitude: null,
     longitude: null,
     googlePlaceId: '',
-    googleMapsUrl: ''
+    googleMapsUrl: '',
+    image: ''
   }
   editingId.value = null
+  imageFile.value = null
+  imagePreview.value = null
 }
 
 //Search and filter (kept for later, currently unused)
@@ -344,11 +378,41 @@ onMounted(() => {
           </div>
         </div> -->
 
-        <label>Google Place ID</label>
-        <input v-model="formData.googlePlaceId" type="text" />
+        <!-- <label>Google Place ID</label>
+        <input v-model="formData.googlePlaceId" type="text" /> -->
 
         <label>Google Maps URL</label>
         <input v-model="formData.googleMapsUrl" type="url" />
+
+        <label>Image</label>
+        <div class="image-upload-section">
+          <div class="upload-area">
+            <input 
+              type="file" 
+              id="place-image-upload" 
+              accept="image/*" 
+              @change="handleImageUpload"
+              class="file-input"
+            />
+            <label for="place-image-upload" class="upload-label">
+              <span class="material-icons">image</span>
+              <span>Choose image or drag & drop</span>
+            </label>
+          </div>
+          <div v-if="imagePreview" class="image-preview">
+            <img :src="imagePreview" :alt="'Preview'" />
+            <button type="button" @click="imageFile = null; imagePreview = null; formData.image = ''" class="remove-btn">x</button>
+          </div>
+        </div>
+
+        <!-- <label>Image URL (alternative)</label>
+        <input 
+          v-model="formData.image" 
+          type="url" 
+          placeholder="https://..." 
+          :disabled="!!imageFile"
+          class="url-input"
+        /> -->
 
         <div class="modal-actions">
           <button 
@@ -407,6 +471,7 @@ onMounted(() => {
   outline: none;
   background: transparent;
   font-size: 0.95rem;
+  padding: 0;
 }
 
 .search-icon {
@@ -474,6 +539,25 @@ onMounted(() => {
   margin-top: 0.5rem;
 }
 
+/* Form inputs inside modal */
+.modal input,
+.modal textarea,
+.modal select {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d2d2d2;
+  border-radius: 8px;
+  margin-top: 0.15rem;
+  margin-bottom: 0.35rem;
+  box-sizing: border-box;
+  font-size: 1rem;
+}
+
+.modal textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
 @media (max-width: 768px) {
   .hero {
     flex-direction: column;
@@ -481,22 +565,247 @@ onMounted(() => {
   }
 }
 
-@media (max-width: 640px) {
+/* Image upload section */
+.image-upload-section {
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.upload-area {
+  position: relative;
+  border: 2px dashed #d2d2d2;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fafafa;
+}
+
+.upload-area:hover {
+  border-color: #76a9fa;
+  background: #f0f6ff;
+}
+
+.upload-area .file-input {
+  display: none;
+}
+
+.upload-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.upload-label .material-icons {
+  font-size: 2rem;
+  color: #76a9fa;
+}
+
+.upload-area:hover .upload-label .material-icons {
+  color: #0f4fa8;
+}
+
+.image-preview {
+  margin-top: 1rem;
+  position: relative;
+  display: inline-block;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  display: block;
+}
+
+
+.url-input:disabled {
+  background: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+}
+
+/* ===========================
+   RESPONSIVE DESIGN
+   =========================== */
+
+@media (max-width: 768px) {
+  .hero {
+    padding: 1.5rem 0.5rem;
+  }
+
+  .hero h1 {
+    font-size: 1.6rem;
+  }
+
+  .hero .subtitle {
+    font-size: 0.95rem;
+  }
+
+  .controls {
+    gap: 0.75rem;
+  }
+
+  .search-bar {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .search-bar input {
+    font-size: 0.95rem;
+  }
+
+  .search-icon {
+    font-size: 18px;
+  }
+
+  .clear-btn {
+    font-size: 1.1rem;
+  }
+
   .sort-bar {
-    flex-direction: column;
-    align-items: flex-start;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .modal input,
+  .modal textarea,
+  .modal select {
+    font-size: 1rem;
+  }
+
+  .list {
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .places-view {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .hero {
+    padding: 1rem 0;
+  }
+
+  .hero h1 {
+    font-size: 1.4rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .hero .subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .search-bar {
+    padding: 0.4rem 0.6rem;
+    width: 100%;
+  }
+
+  .search-bar input {
+    font-size: 0.9rem;
+  }
+
+  .divider {
+    display: none;
+  }
+
+  .search-icon {
+    font-size: 16px;
+  }
+
+  .clear-btn {
+    font-size: 1rem;
+  }
+
+  .sort-bar {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .pill {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .list {
+    gap: 0.5rem;
+  }
+
+  .modal {
+    max-width: 95vw;
+    padding: 1rem;
+  }
+
+  .modal-header {
+    margin-bottom: 0.75rem;
+  }
+
+  .modal-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .modal input,
+  .modal textarea,
+  .modal select {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.95rem;
+    margin-top: 0.1rem;
+    margin-bottom: 0.1rem;
+  }
+
+  .modal textarea {
+    min-height: 80px;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
   }
 
   .modal-actions {
-    grid-template-columns: 1fr;
-    justify-items: stretch;
+    gap: 0.5rem;
+    flex-direction: column;
   }
 
-  .modal-actions .btn-primary,
-  .modal-actions .btn-secondary {
-    grid-column: auto;
-    justify-self: stretch;
+  .modal-actions .btn {
     width: 100%;
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
   }
+
+  .upload-area {
+    padding: 1.5rem 1rem;
+  }
+
+  .upload-label .material-icons {
+    font-size: 1.5rem;
+  }
+
+  .upload-label span:last-child {
+    font-size: 0.9rem;
+  }
+
+  .image-preview img {
+    max-height: 200px;
+  }
+
+
 }
 </style>

@@ -735,20 +735,24 @@ label:first-of-type {
 
   .button-container {
     padding-right: 2rem;
+    margin-right: 0;
   }
 }
 
 @media (max-width: 640px) {
   .place-card {
     flex-direction: row;
-    gap: 0.75rem;
-    padding: 0.75rem;
-    align-items: stretch;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    align-items: flex-start;
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden;
   }
 
   .image-container {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     flex-shrink: 0;
   }
 
@@ -757,20 +761,25 @@ label:first-of-type {
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.25rem;
+    overflow: hidden;
   }
 
   .place-header {
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: 0.3rem;
     margin-bottom: 0;
+    width: 100%;
   }
 
   .place-name {
-    font-size: 18px;
+    font-size: 16px;
+    max-width: 100%;
+    white-space: normal;
+    word-break: break-word;
   }
 
   .maps-icon {
@@ -780,34 +789,39 @@ label:first-of-type {
   .tags-inline {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.3rem;
+    gap: 0.2rem;
     width: 100%;
   }
 
   .place-address {
-    font-size: 14px;
+    font-size: 12px;
     margin: 0;
+    white-space: normal;
+    word-break: break-word;
   }
 
   .tag {
-    font-size: 12px;
-    padding: 0.15rem 0.5rem;
+    font-size: 11px;
+    padding: 0.1rem 0.4rem;
     margin-left: 0;
   }
 
   .maps-icon .material-icons {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .btn-action {
-    padding: 0.4rem 1rem;
-    font-size: 14px;
+    padding: 0.35rem 0.8rem;
+    font-size: 12px;
     width: auto;
     align-self: flex-start;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .button-container {
-    width: 100%;
+    width: auto;
+    flex-shrink: 0;
     padding: 0;
     margin: 0;
     display: flex;

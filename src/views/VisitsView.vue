@@ -216,7 +216,7 @@ onMounted(loadMyVisits)
 
 <style scoped>
 .visits-view {
-  padding: 2rem 0;
+  padding: 2rem 0.5rem;
 }
 
 .list {

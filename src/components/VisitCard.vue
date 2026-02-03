@@ -48,7 +48,7 @@ function toggleNotes() {
 
       <!-- Notes Toggle Button -->
       <div class="bottom-actions">
-        <button v-if="visit.note" @click="toggleNotes" class="icon-button" title="View notes">
+        <button @click="toggleNotes" class="icon-button" title="View notes">
           <span class="material-icons">description</span>
         </button>
       </div>

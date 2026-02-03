@@ -273,7 +273,7 @@ async function submitAddToCollection() {
           placeholder="https://..." 
           :disabled="!!imageFile"
           class="url-input"
-        /> -->s
+        /> -->
 
         <label>Tags (comma separated)</label>
         <input v-model="visitForm.tagsText" type="text" placeholder="e.g. lunch, crowded, favorite" />
@@ -560,8 +560,6 @@ async function submitAddToCollection() {
   border: 1px solid #d2d2d2;
 }
 
-
-
 .url-input:disabled {
   background-color: #f0f0f0;
   cursor: not-allowed;
@@ -638,6 +636,12 @@ label:first-of-type {
   background: #d0d0d0;
 }
 
+.btn-action.add-to-collection {
+  background: #c1dbda;
+  color: black;
+  border: 1px solid #367565;
+}
+
 /* ===========================
    RESPONSIVE DESIGN
    =========================== */
@@ -651,6 +655,10 @@ label:first-of-type {
   .image-container {
     width: 50px;
     height: 50px;
+    margin-right: 0.2rem;
+  }
+  .image-placeholder {
+  font-size: 1.5rem;
   }
 
   .place-header {
@@ -678,6 +686,7 @@ label:first-of-type {
   .btn-action {
     padding: 0.4rem 1rem;
     font-size: 16px;
+    margin-top: 2rem;
   }
 
   .button-container {
@@ -713,13 +722,12 @@ label:first-of-type {
   }
 
   .place-header {
-    display: flex;
-    flex-direction: column;
+    /* display: flex;
     align-items: flex-start;
     flex-wrap: wrap;
     gap: 0.3rem;
     margin-bottom: 0;
-    width: 100%;
+    width: 100%; */
   }
 
   .place-name {
@@ -755,6 +763,11 @@ label:first-of-type {
 
   .maps-icon .material-icons {
     font-size: 14px;
+    padding-top: 0.2rem;
+  }
+
+  .material-icons {
+    font-size: 16px;
   }
 
   .btn-action {
@@ -765,6 +778,7 @@ label:first-of-type {
     white-space: nowrap;
     flex-shrink: 0;
   }
+
 
   .button-container {
     width: auto;

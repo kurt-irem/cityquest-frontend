@@ -391,17 +391,21 @@ onMounted(async () => {
 .place-item {
   display: flex;
   flex-direction: row;
-  gap: 0.5rem;
+  gap: 0.2rem;
   align-items: stretch;
+  position: relative;
 }
 
 .place-item > :first-child {
   flex-grow: 1;
+  width: 100%;
 }
 
 .place-item .icon-button {
-  flex-shrink: 0;
-  align-self: flex-start;
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
 }
 
 .add-place-row {
@@ -480,12 +484,6 @@ onMounted(async () => {
     box-shadow: none;
   }
 
-  .header-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.75rem;
-  }
-
   .title {
     font-size: 1.5rem;
     letter-spacing: 0.5px;
@@ -496,9 +494,7 @@ onMounted(async () => {
     font-size: 0.95rem;
   }
 
-  .actions {
-    align-self: flex-end;
-  }
+  
 
   .tags-row {
     gap: 0.35rem;
@@ -543,11 +539,7 @@ onMounted(async () => {
     border-radius: 8px;
   }
 
-  .header-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
+ 
 
   .title {
     font-size: 1.25rem;
@@ -561,14 +553,16 @@ onMounted(async () => {
     line-height: 1.4;
   }
 
-  .actions {
-    align-self: flex-end;
-    gap: 0.25rem;
-  }
+  
 
   .icon-button .material-icons {
     font-size: 18px;
   }
+
+  .place-item .icon-button {
+  top: 0.2rem;
+  right: 0.2rem;
+}
 
   .tags-row {
     gap: 0.25rem;

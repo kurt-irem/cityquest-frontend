@@ -188,8 +188,12 @@ async function deletePlace(id) {
       success.value = 'Place deleted!'
       await loadMyPlaces()
       await loadAllPlaces()
+    } else if (res.status === 401) {
+      error.value = 'Remove this place from every collection before deleteing it.'
     } else if (res.status === 403) {
       error.value = 'You are not allowed to delete this place'
+    } else {
+      error.value = `Error deleting place (${res.status})`
     }
   } catch (e) {
     error.value = e.message
@@ -431,7 +435,7 @@ onMounted(() => {
 
 <style scoped>
 .places-view {
-  padding: 2rem 0;
+  padding: 2rem 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -442,6 +446,7 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  padding: 1.5rem 0.5rem;
 }
 
 .subtitle {

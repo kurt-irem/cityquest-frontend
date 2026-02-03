@@ -49,7 +49,7 @@ async function login() {
   <div class="login-page">
     <div class="hero-section">
       <h1 class="hero-title">Welcome to CityQuest</h1>
-      <p class="hero-subtitle">Make a habit of trying new places and explore your City!</p>
+      <p class="hero-subtitle">Make a habit of trying new places and exploring your city!</p>
     </div>
 
     <div class="form-container">
@@ -153,7 +153,7 @@ async function login() {
   border-radius: 20px;
   padding: var(--space-xl, 3rem);
   width: 100%;
-  max-width: 400px;
+  max-width: 500px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   transition: box-shadow 0.3s ease;
 }

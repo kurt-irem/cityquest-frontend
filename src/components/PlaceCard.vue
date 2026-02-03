@@ -721,14 +721,6 @@ label:first-of-type {
     overflow: hidden;
   }
 
-  .place-header {
-    /* display: flex;
-    align-items: flex-start;
-    flex-wrap: wrap;
-    gap: 0.3rem;
-    margin-bottom: 0;
-    width: 100%; */
-  }
 
   .place-name {
     font-size: 16px;
